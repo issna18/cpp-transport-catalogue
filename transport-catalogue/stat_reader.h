@@ -1,5 +1,7 @@
 #pragma once
+#include "transport_catalogue.h"
 
+#include <iostream>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -9,13 +11,14 @@ namespace Reader {
 class Stat
 {
 public:
-    using Query = std::pair<bool, std::string>;
-    Stat(std::istream& input);
-    const std::vector<Query>& GetQueries();
+    Stat(TransportCatalogue& transport_catalogue, std::ostream& out = std::cout);
+    void Read(std::istream& input);
 
 private:
     void ProcessLine(std::string_view line);
-    Query ParseQuery(std::string_view line);
-    std::vector<Query> queries;
+    void PrintBus(const TransportCatalogue::BusInfo& info) const;
+    void PrintStop(const TransportCatalogue::StopInfo& info) const;
+    TransportCatalogue& m_transport_catalogue;
+    std::ostream& m_out;
 };
 }

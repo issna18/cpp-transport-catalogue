@@ -51,17 +51,20 @@ std::pair<double, std::string_view> ParseDouble(std::string_view line, char deli
 class Input
 {
 public:
-    Input(std::istream& input);
-    void FillCatalogue(TransportCatalogue& tc);
+    Input(TransportCatalogue& transport_cataloge);
+
+    void Read(std::istream& input);
 
 private:
     void ProcessLine(std::string_view line);
     static std::pair<std::pair<std::string, int>, std::string_view> ParseAdjacent(std::string_view line);
     StopData ParseStop(std::string_view line) const;
     BusData ParseBus(std::string_view line) const;
+    void FillCatalogue() const;
 
     std::vector<StopData> m_stops;
     std::vector<BusData> m_buses;
     std::string_view m_stop_delimiters {">-"};
+    TransportCatalogue& m_transport_cataloge;
 };
 }

@@ -48,7 +48,11 @@ std::pair<double, std::string_view> ParseDouble(std::string_view line, char deli
     return {std::stod(token.first), token.second};
 }
 
-Input::Input(std::istream& input) {
+Input::Input(TransportCatalogue& transport_cataloge)
+    : m_transport_cataloge {transport_cataloge}
+{}
+
+void Input::Read(std::istream& input) {
     std::string str;
     int queries;
     input >> queries;
@@ -60,19 +64,20 @@ Input::Input(std::istream& input) {
         if (str.empty()) continue;
         ProcessLine(str);
     }
+    FillCatalogue();
 }
 
-void Input::FillCatalogue(TransportCatalogue& tc) {
+void Input::FillCatalogue() const {
     for (const StopData& sd: m_stops){
-        tc.AddStop(sd.name, sd.coordinates);
+        m_transport_cataloge.AddStop(sd.name, sd.coordinates);
     }
     for (const StopData& sd : m_stops) {
         for (const auto& [other, distance] : sd.adjacent){
-            tc.AddAdjacent(sd.name, other, distance);
+            m_transport_cataloge.SetDistance(sd.name, other, distance);
         }
     }
-    for (BusData& bd : m_buses){
-        tc.AddBus(bd.first, bd.second);
+    for (const BusData& bd : m_buses){
+        m_transport_cataloge.AddBus(bd.first, bd.second);
     }
 }
 

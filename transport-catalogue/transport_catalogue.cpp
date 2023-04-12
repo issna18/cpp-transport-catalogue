@@ -55,7 +55,7 @@ void TransportCatalogue::AddStop(std::string_view name, const Coordinates& c) {
     m_names_stops.emplace(stop->name, stop);
 }
 
-void TransportCatalogue::AddAdjacent(std::string_view name,
+void TransportCatalogue::SetDistance(std::string_view name,
                                      std::string_view other,
                                      int distance) {
     StopPtrConst stop = m_names_stops.at(name);
@@ -64,14 +64,21 @@ void TransportCatalogue::AddAdjacent(std::string_view name,
     m_stops_distance[key] = distance;
 }
 
-TransportCatalogue::BusInfo TransportCatalogue::GetBusInfo(std::string_view bus_name) {
+TransportCatalogue::BusInfo TransportCatalogue::GetBusInfo(std::string_view bus_name) const {
 
     if (m_names_buses.count(bus_name) == 0) {
-        return BusInfo {};
+        return BusInfo {ResultStatus::NotFound,
+                    bus_name,
+                    0,
+                    0,
+                    0,
+                    0
+        };
     }
 
     const Bus* bus_ptr {m_names_buses.at(bus_name)};
     return BusInfo {ResultStatus::Success,
+                bus_ptr->name,
                 bus_ptr->stops.size(),
                 bus_ptr->num_unique,
                 bus_ptr->geo_length,
@@ -79,17 +86,18 @@ TransportCatalogue::BusInfo TransportCatalogue::GetBusInfo(std::string_view bus_
     };
 }
 
-TransportCatalogue::StopInfo TransportCatalogue::GetStopInfo(std::string_view stop_name) {
+TransportCatalogue::StopInfo TransportCatalogue::GetStopInfo(std::string_view stop_name) const {
     if (m_names_stops.count(stop_name) == 0) {
-        return StopInfo {};
+        return StopInfo {ResultStatus::NotFound, stop_name, {}};
     }
 
     if (m_stop_to_buses.count(stop_name) == 0) {
-        return StopInfo {ResultStatus::Success, {}};
+        return StopInfo {ResultStatus::Success, stop_name, {}};
     }
 
-    return StopInfo {ResultStatus::Success,
-        {m_stop_to_buses.find(stop_name)->second}};
+    return StopInfo {ResultStatus::Success, stop_name,
+        {m_stop_to_buses.find(stop_name)->second}
+    };
 }
 
 TransportCatalogue::Stop::Stop(const std::string& n, const Coordinates& c)

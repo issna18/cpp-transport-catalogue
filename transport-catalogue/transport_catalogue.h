@@ -25,7 +25,7 @@ public:
     void AddBus(const std::string_view bus_name,
                 const std::vector<std::string>& bus_stops);
     void AddStop(std::string_view name, const Coordinates& c);
-    void AddAdjacent(std::string_view name,
+    void SetDistance(std::string_view name,
                      std::string_view other, int distance);
 
     enum class ResultStatus
@@ -36,6 +36,7 @@ public:
 
     struct BusInfo {
         ResultStatus status {ResultStatus::NotFound};
+        const std::string_view name { };
         size_t num_stops {0};
         size_t num_unique {0};
         double geo_length {0.0};
@@ -44,11 +45,12 @@ public:
 
     struct StopInfo {
         ResultStatus status {ResultStatus::NotFound};
+        const std::string_view name;
         const std::set<std::string_view> buses;
     };
 
-    BusInfo GetBusInfo(std::string_view bus_name);
-    StopInfo GetStopInfo(std::string_view stop_name);
+    BusInfo GetBusInfo(std::string_view bus_name) const;
+    StopInfo GetStopInfo(std::string_view stop_name) const;
 
 private:
 
