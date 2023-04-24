@@ -1,5 +1,6 @@
 #pragma once
 
+#include "json.h"
 #include "transport_catalogue.h"
 
 #include <ostream>
@@ -41,30 +42,20 @@ std::ostream& operator<<(std::ostream& out, const std::unordered_map<K, V> conta
 
 namespace Reader {
 
-std::string_view LeftStrip(std::string_view sv);
-std::string_view RightStrip(std::string_view sv);
-std::string_view Strip(std::string_view sv);
-std::pair<std::string, std::string_view> ParseString(std::string_view line, char delimiter);
-std::pair<int, std::string_view> ParseInt(std::string_view line, char delimiter);
-std::pair<double, std::string_view> ParseDouble(std::string_view line, char delimiter);
-
 class Input
 {
 public:
     Input(TransportCatalogue& transport_cataloge);
-
-    void Read(std::istream& input);
+    void Read(const json::Document& jdoc);
 
 private:
-    void ProcessLine(std::string_view line);
-    static std::pair<std::pair<std::string, int>, std::string_view> ParseAdjacent(std::string_view line);
-    StopData ParseStop(std::string_view line) const;
-    BusData ParseBus(std::string_view line) const;
+    void ProcessBaseRequests(const json::Node& requests);
+    StopData ParseStop(const json::Node& node) const;
+    BusData ParseBus(const json::Node& node) const;
     void FillCatalogue() const;
 
     std::vector<StopData> m_stops;
     std::vector<BusData> m_buses;
-    std::string_view m_stop_delimiters {">-"};
     TransportCatalogue& m_transport_cataloge;
 };
 }

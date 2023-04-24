@@ -15,6 +15,7 @@ Stat::Stat(TransportCatalogue& transport_catalogue, std::ostream& out)
 {}
 
 void Stat::Read(std::istream& input) {
+    /*
     std::string str;
     int num_queries;
     input >> num_queries;
@@ -26,6 +27,7 @@ void Stat::Read(std::istream& input) {
         if (str.empty()) continue;
         ProcessLine(str);
     }
+    */
 }
 
 void Stat::PrintBus(const TransportCatalogue::BusInfo& info) const {
@@ -60,6 +62,7 @@ void Stat::PrintStop(const TransportCatalogue::StopInfo& info) const {
 }
 
 void Stat::ProcessLine(std::string_view line){
+    /*
     auto query {ParseString(line, ' ')};
     bool is_bus {query.first.front() == 'B'};
     auto name {ParseString(query.second, ':')};
@@ -68,6 +71,7 @@ void Stat::ProcessLine(std::string_view line){
     } else {
         PrintStop(m_transport_catalogue.GetStopInfo(name.first));
     }
+    */
 }
 
 }

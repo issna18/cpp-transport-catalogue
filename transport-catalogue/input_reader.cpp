@@ -1,6 +1,6 @@
 #include "input_reader.h"
 
-#include <istream>
+#include <iostream>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -8,71 +8,26 @@
 
 namespace Reader {
 
-std::string_view LeftStrip(std::string_view sv) {
-    sv.remove_prefix(std::min(sv.find_first_not_of(" \t"), sv.size()));
-    return sv;
-}
-
-std::string_view RightStrip(std::string_view sv) {
-    std::size_t found = sv.find_last_not_of(" \t");
-    if (found != std::string::npos) {
-        sv.remove_suffix(sv.size() - found - 1);
-    } else {
-        sv.remove_suffix(sv.size());
-    }
-    return sv;
-}
-
-std::string_view Strip(std::string_view sv) {
-    return LeftStrip(RightStrip(sv));
-}
-
-std::pair<std::string, std::string_view> ParseString(std::string_view line, char delimiter){
-    size_t pos {line.find(delimiter)};
-    if (pos == std::string::npos) {
-        pos = line.size();
-    }
-    std::string_view parsed_sv {line.substr(0, pos)};
-    pos = std::min(pos + 1, line.size());
-    std::string_view tail {line.substr(pos, line.size())};
-    return {std::string(parsed_sv), tail};
-}
-
-std::pair<int, std::string_view> ParseInt(std::string_view line, char delimiter){
-    auto token = ParseString(line, delimiter);
-    return {std::stoi(token.first), token.second};
-}
-
-std::pair<double, std::string_view> ParseDouble(std::string_view line, char delimiter) {
-    auto token = ParseString(line, delimiter);
-    return {std::stod(token.first), token.second};
-}
+using namespace std::string_literals;
+using namespace std::string_view_literals;
 
 Input::Input(TransportCatalogue& transport_cataloge)
     : m_transport_cataloge {transport_cataloge}
 {}
 
-void Input::Read(std::istream& input) {
-    std::string str;
-    int queries;
-    input >> queries;
-    getline(input,str);
-
-    for (int i {0}; i < queries; ++i) {
-        std::getline(input, str);
-        str = Strip(str);
-        if (str.empty()) continue;
-        ProcessLine(str);
-    }
+void Input::Read(const json::Document& jdoc) {
+    ProcessBaseRequests(jdoc.GetRoot().AsMap().at("base_requests"));
     FillCatalogue();
 }
 
 void Input::FillCatalogue() const {
     for (const StopData& sd: m_stops){
+        //std::cout << sd.name << sd.coordinates.lat << std::endl;
         m_transport_cataloge.AddStop(sd.name, sd.coordinates);
     }
     for (const StopData& sd : m_stops) {
         for (const auto& [other, distance] : sd.adjacent){
+            //std::cout << sd.name << "=>" << other  << " " << distance<< std::endl;
             m_transport_cataloge.SetDistance(sd.name, other, distance);
         }
     }
@@ -81,62 +36,51 @@ void Input::FillCatalogue() const {
     }
 }
 
-void Input::ProcessLine(std::string_view line) {
-    if (line.front() == 'S') {
-        m_stops.emplace_back(ParseStop(line));
-    }
-    if (line.front() == 'B') {
-        m_buses.emplace_back(ParseBus(line));
+void Input::ProcessBaseRequests(const json::Node& requests) {
+    for (const json::Node& req : requests.AsArray()) {
+        if (req.AsMap().at("type").AsString() == "Bus"s) {
+            m_buses.emplace_back(ParseBus(req));
+        } else if (req.AsMap().at("type").AsString() == "Stop"s) {
+            m_stops.emplace_back(ParseStop(req));
+        } else {
+            throw std::invalid_argument("Invalid Request Type");
+        }
     }
 }
 
-std::pair<std::pair<std::string, int>, std::string_view>
-Input::ParseAdjacent(std::string_view line)
-{
-    auto distance {ParseInt(LeftStrip(line), ' ')};
-    auto to = ParseString(distance.second, ' ');
-    auto stopname = ParseString(to.second, ',');
-    return {{stopname.first, distance.first}, stopname.second};
-}
-
-StopData Input::ParseStop(std::string_view line) const {
-    auto query {ParseString(line, ' ')};
-    auto name {ParseString(query.second, ':')};
-    auto c1 {ParseDouble(name.second, ',')};
-    auto c2 {ParseDouble(c1.second, ',')};
+StopData Input::ParseStop(const json::Node& node) const {
+    std::string name {node.AsMap().at("name"s).AsString()};
+    auto c_lat {node.AsMap().at("latitude").AsDouble()};
+    auto c_long {node.AsMap().at("longitude").AsDouble()};
 
     std::unordered_map<std::string, int> adjacent;
-    std::string_view tail = c2.second;
-    while (tail.size() != 0 ) {
-        auto adj_enrty = ParseAdjacent(tail);
-        adjacent.emplace(adj_enrty.first);
-        tail = adj_enrty.second;
+
+    const json::Node& distances {node.AsMap().at("road_distances")};
+    for (const auto& entry : distances.AsMap()) {
+        std::pair<std::string, int> adj {entry.first, entry.second.AsInt()};
+        adjacent.emplace(std::move(adj));
     }
-    return {name.first, Coordinates{c1.first, c2.first}, adjacent};
+    return {std::move(name), Coordinates{c_lat, c_long}, std::move(adjacent)};
 }
 
-BusData Input::ParseBus(std::string_view line) const {
+BusData Input::ParseBus(const json::Node& node) const {
     std::vector<std::string> stops;
-    auto query_tail {ParseString(line, ' ')};
-    auto name_tail {ParseString(query_tail.second, ':')};
-    std::string_view tail {name_tail.second};
-    bool is_line_bus {tail.find('-') != std::string::npos};
-    size_t first_pos {0};
-    size_t pos {0};
-    while ((pos = tail.find_first_of(m_stop_delimiters, first_pos)) != std::string::npos) {
-        stops.emplace_back(Strip(tail.substr(first_pos, pos - first_pos)));
-        first_pos = pos + 1;
-    }
-    stops.emplace_back(Strip(tail.substr(first_pos, tail.size() - first_pos)));
+    std::string name {node.AsMap().at("name"s).AsString()};
+    bool is_roundtrip {node.AsMap().at("is_roundtrip"s).AsBool()};
 
-    if (is_line_bus) {
-        std::vector<std::string> as;
-        as.reserve(stops.size() * 2 - 1);
-        as.insert(as.begin(), stops.begin(), stops.end());
-        std::move(stops.rbegin() + 1, stops.rend(), std::back_inserter(as));
-        stops = std::move(as);
+    for (const auto& stop_node : node.AsMap().at("stops").AsArray()) {
+        stops.emplace_back(stop_node.AsString());
     }
-    return {name_tail.first, stops};
+
+    if (!is_roundtrip) {
+        std::vector<std::string> all_stops;
+        all_stops.reserve(stops.size() * 2 - 1);
+        all_stops.insert(all_stops.begin(), stops.begin(), stops.end());
+        std::move(stops.rbegin() + 1, stops.rend(), std::back_inserter(all_stops));
+        stops = std::move(all_stops);
+    }
+
+    return {std::move(name), std::move(stops)};
 }
 
 }
