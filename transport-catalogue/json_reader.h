@@ -9,37 +9,6 @@
 #include <vector>
 #include <unordered_map>
 
-template <typename F, typename S>
-std::ostream& operator<<(std::ostream& out, const std::pair<F, S> p) {
-    out << '(' << p.first << ", " << p.second << ')';
-    return out;
-}
-
-template <typename Container>
-std::ostream& Print(std::ostream& out, const Container& container)
-{
-     bool is_first = true;
-    for (const auto& element : container) {
-        if (!is_first) {
-            out << " ";
-        }
-        is_first = false;
-        out << element;
-    }
-    return out;
-}
-
-template <typename ElementT>
-std::ostream& operator<<(std::ostream& out, const std::set<ElementT> container) {
-    return Print(out, container);
-}
-
-template <typename K, typename V>
-std::ostream& operator<<(std::ostream& out, const std::unordered_map<K, V> container) {
-    out << '<';
-    return Print(out, container) << '>';
-}
-
 namespace Reader {
 
 class Input

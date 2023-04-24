@@ -359,7 +359,7 @@ struct ValuePrinter {
         out << "\n]";
     }
 
-    void operator()(std::map<std::string, Node> m) const {
+    void operator()(std::unordered_map<std::string, Node> m) const {
         out << "{\n";
         for (auto it = m.begin(); it != m.end(); it++) {
             out << tab << '"' << it->first << '"' << ": ";

@@ -5,6 +5,8 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <set>
+#include <unordered_map>
 
 namespace Reader {
 
