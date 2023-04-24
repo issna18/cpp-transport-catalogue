@@ -1,4 +1,4 @@
-#include "input_reader.h"
+#include "json.h"
 #include "stat_reader.h"
 
 #include <iostream>
