@@ -3,24 +3,24 @@
 #include "json.h"
 #include "transport_catalogue.h"
 
-#include <vector>
+#include <istream>
+
 
 namespace json {
+
+Node ToJSON(const TransportCatalogue::BusInfo& info);
+Node ToJSON(const TransportCatalogue::StopInfo& info);
+StopData StopDataFromJSON(const json::Node& node);
+BusData BusDataFromJSON(const json::Node& node);
 
 class Reader
 {
 public:
-    Reader(TransportCatalogue& transport_cataloge);
-    void Read(const json::Document& jdoc);
+    Reader(std::istream& in);
+    const Node& GetBaseRequests() const;
+    const Node& GetStatRequests() const;
 
 private:
-    void ProcessRequests(const json::Node& requests);
-    StopData ParseStop(const json::Node& node) const;
-    BusData ParseBus(const json::Node& node) const;
-    void FillCatalogue() const;
-
-    std::vector<StopData> m_stops;
-    std::vector<BusData> m_buses;
-    TransportCatalogue& m_transport_cataloge;
+    json::Document m_json;
 };
 }

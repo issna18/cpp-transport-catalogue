@@ -1,67 +1,55 @@
-#include "json.h"
 #include "request_handler.h"
 
-#include <iostream>
-#include <iomanip>
 #include <string>
 #include <string_view>
 #include <vector>
 
+using namespace std::string_literals;
 
-RequestHandler::RequestHandler(const TransportCatalogue &transport_catalogue, std::ostream& out)
-    : m_transport_catalogue {transport_catalogue},
-      m_out {out}
+RequestHandler::RequestHandler(std::ostream& out)
+    : m_out {out}
 {}
 
-void RequestHandler::Read(const json::Document& jdoc) {
-   ProcessRequests(jdoc.GetRoot().AsMap().at("stat_requests"));
-}
+void RequestHandler::ProcessBaseRequests(const json::Reader& reader) {
+    std::vector<StopData> m_stops;
+    std::vector<BusData> m_buses;
 
-json::Node RequestHandler::Print(const TransportCatalogue::BusInfo& info) const {
-    using namespace std::string_literals;
-    json::Dict result;
-    result["request_id"] = json::Node(info.request_id);
-    if (info.status == TransportCatalogue::ResultStatus::NotFound) {
-        result["error_message"] = json::Node("not found"s);
-        return json::Node(std::move(result));
-    }
-    result["curvature"] = json::Node(info.route_length/info.geo_length);
-    result["route_length"] = json::Node(info.route_length);
-    result["stop_count"] = json::Node(static_cast<int>(info.num_stops));
-    result["unique_stop_count"] = json::Node(static_cast<int>(info.num_unique));
-
-    return json::Node(std::move(result));
-}
-
-json::Node RequestHandler::Print(const TransportCatalogue::StopInfo& info) const {
-    using namespace std::string_literals;
-    json::Dict result;
-
-    result["request_id"] = json::Node(info.request_id);
-    if (info.status == TransportCatalogue::ResultStatus::NotFound) {
-        result["error_message"] = json::Node("not found"s);
-        return json::Node(std::move(result));
-    }
-    json::Array buses;
-    for (const auto& bus : info.buses) {
-        buses.push_back(json::Node(std::string(bus)));
-    }
-    result["buses"] = json::Node(std::move(buses));
-
-    return json::Node(result);
-}
-
-void RequestHandler::ProcessRequests(const json::Node& requests){
-    json::Array results;
-
-    for (const json::Node& req : requests.AsArray()) {
-        bool is_bus {"Bus" == req.AsMap().at("type").AsString()};
-        int id {req.AsMap().at("id").AsInt()};
-        std::string name {req.AsMap().at("name").AsString()};
-        if (is_bus) {
-            results.push_back(Print(m_transport_catalogue.GetInfo(BusQuery{id, name})));
+    const auto& requests {reader.GetBaseRequests().AsArray()};
+    for (const json::Node& req : requests) {
+        if (req.AsMap().at("type"s).AsString() == "Bus"s) {
+            m_buses.emplace_back(json::BusDataFromJSON(req));
+        } else if (req.AsMap().at("type"s).AsString() == "Stop"s) {
+            m_stops.emplace_back(json::StopDataFromJSON(req));
         } else {
-            results.push_back(Print(m_transport_catalogue.GetInfo(StopQuery{id, name})));
+            throw std::invalid_argument("Invalid Request Type");
+        }
+    }
+
+    for (const StopData& sd: m_stops){
+        m_transport_catalogue.AddStop(sd.name, sd.coordinates);
+    }
+    for (const StopData& sd : m_stops) {
+        for (const auto& [other, distance] : sd.adjacent){
+            m_transport_catalogue.SetDistance(sd.name, other, distance);
+        }
+    }
+    for (const BusData& bd : m_buses){
+        m_transport_catalogue.AddBus(bd.first, bd.second);
+    }
+}
+
+void RequestHandler::ProcessStatRequests(const json::Reader &reader){
+    json::Array results;
+    const auto& requests {reader.GetStatRequests().AsArray()};
+
+    for (const json::Node& req : requests) {
+        bool is_bus {"Bus"s == req.AsMap().at("type"s).AsString()};
+        int id {req.AsMap().at("id"s).AsInt()};
+        std::string name {req.AsMap().at("name"s).AsString()};
+        if (is_bus) {
+            results.push_back(json::ToJSON(m_transport_catalogue.GetInfo(BusQuery{id, name})));
+        } else {
+            results.push_back(json::ToJSON(m_transport_catalogue.GetInfo(StopQuery{id, name})));
         }
     }
 
