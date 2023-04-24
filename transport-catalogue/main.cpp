@@ -11,13 +11,13 @@ int main() {
     TransportCatalogue transport_catalogue;
 
     {
-        Reader::Input input_reader(transport_catalogue);
+        json::Reader input_reader(transport_catalogue);
         input_reader.Read(json_doc);
     }
 
     {
-        Reader::Stat stat_reader(transport_catalogue);
-        stat_reader.Read(json_doc);
+        RequestHandler request_handler(transport_catalogue);
+        request_handler.Read(json_doc);
     }
 
 return 0;

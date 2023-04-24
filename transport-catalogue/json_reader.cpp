@@ -5,21 +5,21 @@
 #include <vector>
 #include <unordered_map>
 
-namespace Reader {
+namespace json {
 
 using namespace std::string_literals;
 using namespace std::string_view_literals;
 
-Input::Input(TransportCatalogue& transport_cataloge)
+Reader::Reader(TransportCatalogue& transport_cataloge)
     : m_transport_cataloge {transport_cataloge}
 {}
 
-void Input::Read(const json::Document& jdoc) {
+void Reader::Read(const json::Document& jdoc) {
     ProcessRequests(jdoc.GetRoot().AsMap().at("base_requests"));
     FillCatalogue();
 }
 
-void Input::FillCatalogue() const {
+void Reader::FillCatalogue() const {
     for (const StopData& sd: m_stops){
         //std::cout << sd.name << sd.coordinates.lat << std::endl;
         m_transport_cataloge.AddStop(sd.name, sd.coordinates);
@@ -35,7 +35,7 @@ void Input::FillCatalogue() const {
     }
 }
 
-void Input::ProcessRequests(const json::Node& requests) {
+void Reader::ProcessRequests(const json::Node& requests) {
     for (const json::Node& req : requests.AsArray()) {
         if (req.AsMap().at("type").AsString() == "Bus"s) {
             m_buses.emplace_back(ParseBus(req));
@@ -47,7 +47,7 @@ void Input::ProcessRequests(const json::Node& requests) {
     }
 }
 
-StopData Input::ParseStop(const json::Node& node) const {
+StopData Reader::ParseStop(const json::Node& node) const {
     auto c_lat {node.AsMap().at("latitude").AsDouble()};
     auto c_long {node.AsMap().at("longitude").AsDouble()};
 
@@ -61,7 +61,7 @@ StopData Input::ParseStop(const json::Node& node) const {
     return {node.AsMap().at("name"s).AsString(), Coordinates{c_lat, c_long}, std::move(adjacent)};
 }
 
-BusData Input::ParseBus(const json::Node& node) const {
+BusData Reader::ParseBus(const json::Node& node) const {
     std::vector<std::string_view> stops;
     bool is_roundtrip {node.AsMap().at("is_roundtrip"s).AsBool()};
 

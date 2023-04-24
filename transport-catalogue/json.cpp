@@ -324,8 +324,6 @@ bool Document::operator!=(const Document& rhs) const{
     return root_ != rhs.root_;
 }
 
-void PrintNode(const Node& node, std::ostream& out, size_t indent = 0u);
-
 struct ValuePrinter {
     std::ostream& out;
     size_t tab_num {0};
@@ -359,7 +357,7 @@ struct ValuePrinter {
         out << "\n]";
     }
 
-    void operator()(std::unordered_map<std::string, Node> m) const {
+    void operator()(std::map<std::string, Node> m) const {
         out << "{\n";
         for (auto it = m.begin(); it != m.end(); it++) {
             out << tab << '"' << it->first << '"' << ": ";

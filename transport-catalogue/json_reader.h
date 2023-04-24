@@ -5,12 +5,12 @@
 
 #include <vector>
 
-namespace Reader {
+namespace json {
 
-class Input
+class Reader
 {
 public:
-    Input(TransportCatalogue& transport_cataloge);
+    Reader(TransportCatalogue& transport_cataloge);
     void Read(const json::Document& jdoc);
 
 private:

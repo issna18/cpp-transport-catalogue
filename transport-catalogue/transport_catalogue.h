@@ -28,6 +28,7 @@ public:
 
     struct BusInfo {
         ResultStatus status {ResultStatus::NotFound};
+        int request_id {0};
         const std::string_view name { };
         size_t num_stops {0};
         size_t num_unique {0};
@@ -37,6 +38,7 @@ public:
 
     struct StopInfo {
         ResultStatus status {ResultStatus::NotFound};
+        int request_id {0};
         const std::string_view name;
         const std::set<std::string_view> buses;
     };

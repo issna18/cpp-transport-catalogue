@@ -7,62 +7,65 @@
 #include <string_view>
 #include <vector>
 
-namespace Reader {
 
-Stat::Stat(const TransportCatalogue &transport_catalogue, std::ostream& out)
+RequestHandler::RequestHandler(const TransportCatalogue &transport_catalogue, std::ostream& out)
     : m_transport_catalogue {transport_catalogue},
       m_out {out}
 {}
 
-void Stat::Read(const json::Document& jdoc) {
+void RequestHandler::Read(const json::Document& jdoc) {
    ProcessRequests(jdoc.GetRoot().AsMap().at("stat_requests"));
 }
 
-void Stat::Print(const TransportCatalogue::BusInfo& info) const {
- using namespace std::string_view_literals;
-    m_out << "Bus "sv << info.name << ": "sv;
+json::Node RequestHandler::Print(const TransportCatalogue::BusInfo& info) const {
+    using namespace std::string_literals;
+    json::Dict result;
+    result["request_id"] = json::Node(info.request_id);
     if (info.status == TransportCatalogue::ResultStatus::NotFound) {
-        m_out << "not found"sv << std::endl;
-        return;
+        result["error_message"] = json::Node("not found"s);
+        return json::Node(std::move(result));
     }
-    m_out << info.num_stops << " stops on route, "sv
-              << info.num_unique << " unique stops, "sv
-              << info.route_length << " route length, "sv
-              << std::setprecision(6) << info.route_length/info.geo_length << " curvature"sv
-              << std::endl;
+    result["curvature"] = json::Node(info.route_length/info.geo_length);
+    result["route_length"] = json::Node(info.route_length);
+    result["stop_count"] = json::Node(static_cast<int>(info.num_stops));
+    result["unique_stop_count"] = json::Node(static_cast<int>(info.num_unique));
+
+    return json::Node(std::move(result));
 }
 
-void Stat::Print(const TransportCatalogue::StopInfo& info) const {
-    using namespace std::string_view_literals;
-    m_out << "Stop "sv << info.name << ": "sv;
+json::Node RequestHandler::Print(const TransportCatalogue::StopInfo& info) const {
+    using namespace std::string_literals;
+    json::Dict result;
 
+    result["request_id"] = json::Node(info.request_id);
     if (info.status == TransportCatalogue::ResultStatus::NotFound) {
-        m_out << "not found"sv << std::endl;
-        return;
+        result["error_message"] = json::Node("not found"s);
+        return json::Node(std::move(result));
     }
-
-    if (info.buses.size() == 0) {
-        m_out << "no buses"sv << std::endl;
-        return;
+    json::Array buses;
+    for (const auto& bus : info.buses) {
+        buses.push_back(json::Node(std::string(bus)));
     }
+    result["buses"] = json::Node(std::move(buses));
 
-    m_out << "buses "sv << info.buses << std::endl;
+    return json::Node(result);
 }
 
-void Stat::ProcessRequests(const json::Node& requests){
+void RequestHandler::ProcessRequests(const json::Node& requests){
+    json::Array results;
+
     for (const json::Node& req : requests.AsArray()) {
         bool is_bus {"Bus" == req.AsMap().at("type").AsString()};
         int id {req.AsMap().at("id").AsInt()};
         std::string name {req.AsMap().at("name").AsString()};
         if (is_bus) {
-            BusQuery query {id, name};
-            Print(m_transport_catalogue.GetInfo(query));
+            results.push_back(Print(m_transport_catalogue.GetInfo(BusQuery{id, name})));
         } else {
-            StopQuery query {id, name};
-            Print(m_transport_catalogue.GetInfo(query));
+            results.push_back(Print(m_transport_catalogue.GetInfo(StopQuery{id, name})));
         }
     }
-}
 
+    json::PrintNode(json::Node{std::move(results)}, m_out);
+    m_out << std::endl;
 }
 

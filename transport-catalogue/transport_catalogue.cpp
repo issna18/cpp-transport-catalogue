@@ -61,21 +61,23 @@ TransportCatalogue::BusInfo TransportCatalogue::GetInfo(const BusQuery& query) c
 {
     if (m_names_buses.count(query.name) == 0) {
         return BusInfo {ResultStatus::NotFound,
-                    query.name,
-                    0,
-                    0,
-                    0,
-                    0
+                        query.id,
+                        query.name,
+                        0,
+                        0,
+                        0,
+                        0
         };
     }
 
     const Bus* bus_ptr {m_names_buses.at(query.name)};
     return BusInfo {ResultStatus::Success,
-                bus_ptr->name,
-                bus_ptr->stops.size(),
-                bus_ptr->num_unique,
-                bus_ptr->geo_length,
-                bus_ptr->route_length
+                    query.id,
+                    bus_ptr->name,
+                    bus_ptr->stops.size(),
+                    bus_ptr->num_unique,
+                    bus_ptr->geo_length,
+                    bus_ptr->route_length
     };
 }
 
@@ -83,14 +85,16 @@ TransportCatalogue::BusInfo TransportCatalogue::GetInfo(const BusQuery& query) c
 TransportCatalogue::StopInfo TransportCatalogue::GetInfo(const StopQuery& query) const
 {
     if (m_names_stops.count(query.name) == 0) {
-        return StopInfo {ResultStatus::NotFound, query.name, {}};
+        return StopInfo {ResultStatus::NotFound, query.id, query.name, {}};
     }
 
     if (m_stop_to_buses.count(query.name) == 0) {
-        return StopInfo {ResultStatus::Success, query.name, {}};
+        return StopInfo {ResultStatus::Success, query.id, query.name, {}};
     }
 
-    return StopInfo {ResultStatus::Success, query.name,
-        {m_stop_to_buses.find(query.name)->second}
+    return StopInfo {ResultStatus::Success,
+                     query.id,
+                     query.name,
+                     {m_stop_to_buses.find(query.name)->second}
     };
 }

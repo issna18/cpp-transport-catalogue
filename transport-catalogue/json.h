@@ -5,7 +5,7 @@
 #include <string>
 #include <variant>
 #include <vector>
-#include <unordered_map>
+#include <map>
 
 template <typename F, typename S>
 std::ostream& operator<<(std::ostream& out, const std::pair<F, S> p) {
@@ -33,7 +33,7 @@ std::ostream& operator<<(std::ostream& out, const std::set<ElementT> container) 
 }
 
 template <typename K, typename V>
-std::ostream& operator<<(std::ostream& out, const std::unordered_map<K, V> container) {
+std::ostream& operator<<(std::ostream& out, const std::map<K, V> container) {
     out << '<';
     return Print(out, container) << '>';
 }
@@ -42,7 +42,7 @@ namespace json {
 
 class Node;
 using Array = std::vector<Node>;
-using Dict = std::unordered_map<std::string, Node>;
+using Dict = std::map<std::string, Node>;
 using Map = Dict;
 
 class ParsingError : public std::runtime_error {
@@ -102,6 +102,7 @@ private:
 
 Document Load(std::istream& input);
 
+void PrintNode(const Node& node, std::ostream& out, size_t indent = 0u);
 void Print(const Document& doc, std::ostream& output);
 
 }  // namespace json
