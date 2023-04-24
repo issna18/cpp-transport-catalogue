@@ -1,26 +1,23 @@
 #pragma once
+
+#include "json.h"
 #include "transport_catalogue.h"
 
-#include <iostream>
-#include <string>
-#include <string_view>
-#include <vector>
-#include <set>
-#include <unordered_map>
+#include <ostream>
 
 namespace Reader {
 
 class Stat
 {
 public:
-    Stat(TransportCatalogue& transport_catalogue, std::ostream& out = std::cout);
-    void Read(std::istream& input);
+    Stat(const TransportCatalogue& transport_catalogue, std::ostream& out = std::cout);
+    void Read(const json::Document& jdoc);
 
 private:
-    void ProcessLine(std::string_view line);
-    void PrintBus(const TransportCatalogue::BusInfo& info) const;
-    void PrintStop(const TransportCatalogue::StopInfo& info) const;
-    TransportCatalogue& m_transport_catalogue;
+    void ProcessRequests(const json::Node& requests);
+    void Print(const TransportCatalogue::BusInfo& info) const;
+    void Print(const TransportCatalogue::StopInfo& info) const;
+    const TransportCatalogue& m_transport_catalogue;
     std::ostream& m_out;
 };
 }

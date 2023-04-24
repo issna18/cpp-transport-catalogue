@@ -1,7 +1,6 @@
 #include "json_reader.h"
 
 #include <iostream>
-#include <string>
 #include <string_view>
 #include <vector>
 #include <unordered_map>
@@ -16,7 +15,7 @@ Input::Input(TransportCatalogue& transport_cataloge)
 {}
 
 void Input::Read(const json::Document& jdoc) {
-    ProcessBaseRequests(jdoc.GetRoot().AsMap().at("base_requests"));
+    ProcessRequests(jdoc.GetRoot().AsMap().at("base_requests"));
     FillCatalogue();
 }
 
@@ -36,7 +35,7 @@ void Input::FillCatalogue() const {
     }
 }
 
-void Input::ProcessBaseRequests(const json::Node& requests) {
+void Input::ProcessRequests(const json::Node& requests) {
     for (const json::Node& req : requests.AsArray()) {
         if (req.AsMap().at("type").AsString() == "Bus"s) {
             m_buses.emplace_back(ParseBus(req));
@@ -49,23 +48,21 @@ void Input::ProcessBaseRequests(const json::Node& requests) {
 }
 
 StopData Input::ParseStop(const json::Node& node) const {
-    std::string name {node.AsMap().at("name"s).AsString()};
     auto c_lat {node.AsMap().at("latitude").AsDouble()};
     auto c_long {node.AsMap().at("longitude").AsDouble()};
 
-    std::unordered_map<std::string, int> adjacent;
+    std::unordered_map<std::string_view, int> adjacent;
 
     const json::Node& distances {node.AsMap().at("road_distances")};
     for (const auto& entry : distances.AsMap()) {
-        std::pair<std::string, int> adj {entry.first, entry.second.AsInt()};
+        std::pair<std::string_view, int> adj {entry.first, entry.second.AsInt()};
         adjacent.emplace(std::move(adj));
     }
-    return {std::move(name), Coordinates{c_lat, c_long}, std::move(adjacent)};
+    return {node.AsMap().at("name"s).AsString(), Coordinates{c_lat, c_long}, std::move(adjacent)};
 }
 
 BusData Input::ParseBus(const json::Node& node) const {
-    std::vector<std::string> stops;
-    std::string name {node.AsMap().at("name"s).AsString()};
+    std::vector<std::string_view> stops;
     bool is_roundtrip {node.AsMap().at("is_roundtrip"s).AsBool()};
 
     for (const auto& stop_node : node.AsMap().at("stops").AsArray()) {
@@ -73,14 +70,14 @@ BusData Input::ParseBus(const json::Node& node) const {
     }
 
     if (!is_roundtrip) {
-        std::vector<std::string> all_stops;
+        std::vector<std::string_view> all_stops;
         all_stops.reserve(stops.size() * 2 - 1);
         all_stops.insert(all_stops.begin(), stops.begin(), stops.end());
         std::move(stops.rbegin() + 1, stops.rend(), std::back_inserter(all_stops));
         stops = std::move(all_stops);
     }
 
-    return {std::move(name), std::move(stops)};
+    return {node.AsMap().at("name"s).AsString(), std::move(stops)};
 }
 
 }

@@ -1,16 +1,9 @@
 #include "transport_catalogue.h"
 
-#include <deque>
-#include <iostream>
-#include <set>
-#include <string>
-#include <string_view>
-#include <vector>
-#include <unordered_map>
 #include <unordered_set>
 
 void TransportCatalogue::AddBus(const std::string_view bus_name,
-                                const std::vector<std::string>& bus_stops) {
+                                const std::vector<std::string_view>& bus_stops) {
     std::vector<StopPtrConst> v_s;
     v_s.reserve(bus_stops.size());
     std::unordered_set<std::string_view> unique_stops;
@@ -64,11 +57,11 @@ void TransportCatalogue::SetDistance(std::string_view name,
     m_stops_distance[key] = distance;
 }
 
-TransportCatalogue::BusInfo TransportCatalogue::GetBusInfo(std::string_view bus_name) const {
-
-    if (m_names_buses.count(bus_name) == 0) {
+TransportCatalogue::BusInfo TransportCatalogue::GetInfo(const BusQuery& query) const
+{
+    if (m_names_buses.count(query.name) == 0) {
         return BusInfo {ResultStatus::NotFound,
-                    bus_name,
+                    query.name,
                     0,
                     0,
                     0,
@@ -76,7 +69,7 @@ TransportCatalogue::BusInfo TransportCatalogue::GetBusInfo(std::string_view bus_
         };
     }
 
-    const Bus* bus_ptr {m_names_buses.at(bus_name)};
+    const Bus* bus_ptr {m_names_buses.at(query.name)};
     return BusInfo {ResultStatus::Success,
                 bus_ptr->name,
                 bus_ptr->stops.size(),
@@ -86,50 +79,18 @@ TransportCatalogue::BusInfo TransportCatalogue::GetBusInfo(std::string_view bus_
     };
 }
 
-TransportCatalogue::StopInfo TransportCatalogue::GetStopInfo(std::string_view stop_name) const {
-    if (m_names_stops.count(stop_name) == 0) {
-        return StopInfo {ResultStatus::NotFound, stop_name, {}};
+
+TransportCatalogue::StopInfo TransportCatalogue::GetInfo(const StopQuery& query) const
+{
+    if (m_names_stops.count(query.name) == 0) {
+        return StopInfo {ResultStatus::NotFound, query.name, {}};
     }
 
-    if (m_stop_to_buses.count(stop_name) == 0) {
-        return StopInfo {ResultStatus::Success, stop_name, {}};
+    if (m_stop_to_buses.count(query.name) == 0) {
+        return StopInfo {ResultStatus::Success, query.name, {}};
     }
 
-    return StopInfo {ResultStatus::Success, stop_name,
-        {m_stop_to_buses.find(stop_name)->second}
+    return StopInfo {ResultStatus::Success, query.name,
+        {m_stop_to_buses.find(query.name)->second}
     };
 }
-
-TransportCatalogue::Stop::Stop(const std::string& n, const Coordinates& c)
-    : name {n},
-      coord {c}
-{}
-
-bool TransportCatalogue::Stop::operator==(const Stop& other) const {
-    return name == other.name;
-}
-
-TransportCatalogue::Bus::Bus(const std::string& n,
-                             const std::vector<StopPtrConst>& s,
-                             size_t num_u,
-                             double g_len,
-                             int r_len)
-    : name {n},
-      stops {s},
-      num_unique {num_u},
-      geo_length {g_len},
-      route_length {r_len}
-{}
-
-bool TransportCatalogue::Bus::operator==(const Bus& other) const {
-    return name == other.name;
-}
-
-size_t TransportCatalogue::PairStopsHasher::operator() (const PairStops stops) const {
-    size_t h_first = hasher(stops.first);
-    size_t h_second = hasher(stops.second);
-    return h_first + h_second * 37;
-}
-
-
-
