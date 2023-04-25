@@ -4,7 +4,7 @@
 
 #include <cmath>
 
-//namespace geo {
+namespace geo {
 
 double ComputeDistance(Coordinates from, Coordinates to) {
     using namespace std;
@@ -17,4 +17,4 @@ double ComputeDistance(Coordinates from, Coordinates to) {
         * RADIUS_EARTH;
 }
 
-//}  // namespace geo
+}  // namespace geo

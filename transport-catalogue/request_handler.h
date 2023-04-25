@@ -9,12 +9,12 @@
 class RequestHandler
 {
 public:
-    RequestHandler(std::ostream& out = std::cout);
+    RequestHandler();
     void ProcessBaseRequests(const json::Reader& reader);
-    void ProcessStatRequests(const json::Reader& reader);
+    void ProcessStatRequests(const json::Reader& reader, std::ostream& out = std::cout);
+    const std::deque<Bus>& GetMap() const;
 
 private:
     TransportCatalogue m_transport_catalogue;
-    std::ostream& m_out;
+    //std::ostream& m_out;
 };
-

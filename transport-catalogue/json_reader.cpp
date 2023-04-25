@@ -21,6 +21,10 @@ const Node& Reader::GetStatRequests() const {
     return m_json.GetRoot().AsMap().at("stat_requests");
 };
 
+const Node& Reader::GetRenderSettings() const {
+    return m_json.GetRoot().AsMap().at("render_settings");
+};
+
 
 Node ToJSON(const TransportCatalogue::BusInfo& info) {
     Dict result;
@@ -84,7 +88,60 @@ StopData StopDataFromJSON(const Node& node) {
         std::pair<std::string_view, int> adj {entry.first, entry.second.AsInt()};
         adjacent.emplace(std::move(adj));
     }
-    return {node.AsMap().at("name"s).AsString(), Coordinates{c_lat, c_long}, std::move(adjacent)};
+    return {node.AsMap().at("name"s).AsString(), geo::Coordinates{c_lat, c_long}, std::move(adjacent)};
 }
+
+
+RenderSettings GetSettingsFromJSON(const Node& node) {
+
+    auto ColorFromJSON = [](const Node& n) {
+        if (n.IsArray() && n.AsArray().size() == 4) {
+            const auto& array {n.AsArray()};
+            return svg::Color(svg::Rgba(static_cast<uint8_t>(array[0].AsInt()),
+                                        static_cast<uint8_t>(array[1].AsInt()),
+                                        static_cast<uint8_t>(array[2].AsInt()),
+                                        array[3].AsDouble()
+                                        )
+            );
+        } else if (n.IsArray() && n.AsArray().size() == 3) {
+            const auto& array {n.AsArray()};
+            return svg::Color(svg::Rgb(static_cast<uint8_t>(array[0].AsInt()),
+                                       static_cast<uint8_t>(array[1].AsInt()),
+                                       static_cast<uint8_t>(array[2].AsInt())
+                                       )
+            );
+        } else if (n.IsString()){
+            return svg::Color(n.AsString());
+        }
+        return svg::Color{};
+    };
+
+    const auto& json {node.AsMap()};
+    RenderSettings settings;
+    settings.width = json.at("width"s).AsDouble();
+    settings.height = json.at("height"s).AsDouble();
+    settings.padding = json.at("padding"s).AsDouble();
+    settings.line_width = json.at("line_width"s).AsDouble();
+    settings.stop_radius = json.at("stop_radius"s).AsDouble();
+
+    settings.bus_label_font_size = json.at("bus_label_font_size"s).AsInt();
+    const auto& bl_offset {json.at("bus_label_offset"s).AsArray()};
+    settings.bus_label_offset = {bl_offset[0].AsDouble(), bl_offset[1].AsDouble()};
+
+    settings.stop_label_font_size = json.at("stop_label_font_size"s).AsInt();
+    const auto& sl_offset {json.at("stop_label_offset"s).AsArray()};
+    settings.stop_label_offset = {sl_offset[0].AsDouble(), sl_offset[1].AsDouble()};
+
+    settings.underlayer_color = ColorFromJSON(json.at("underlayer_color"s));
+    settings.underlayer_width = json.at("underlayer_width").AsDouble();
+
+    const auto& palette {json.at("color_palette"s).AsArray()};
+    for (const Node& j_color : palette) {
+        settings.color_palette.emplace_back(ColorFromJSON(j_color));
+    }
+
+    return settings;
+}
+
 
 }

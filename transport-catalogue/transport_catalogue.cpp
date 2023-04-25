@@ -13,10 +13,10 @@ void TransportCatalogue::AddBus(const std::string_view bus_name,
         unique_stops.emplace(stop->name);
     }
 
-    Coordinates prev_coord = v_s.at(0)->coord;
+    geo::Coordinates prev_coord = v_s.at(0)->coord;
     double distance {};
     for (auto it = v_s.begin() + 1; it != v_s.end(); it++) {
-        Coordinates current_coord {(*it)->coord};
+        geo::Coordinates current_coord {(*it)->coord};
         distance += ComputeDistance(prev_coord, current_coord);
         prev_coord = current_coord;
     }
@@ -43,7 +43,7 @@ void TransportCatalogue::AddBus(const std::string_view bus_name,
     }
 }
 
-void TransportCatalogue::AddStop(std::string_view name, const Coordinates& c) {
+void TransportCatalogue::AddStop(std::string_view name, const geo::Coordinates& c) {
     StopPtrConst stop = &m_dqstops.emplace_back(Stop(std::string(name), c));
     m_names_stops.emplace(stop->name, stop);
 }
@@ -97,4 +97,9 @@ TransportCatalogue::StopInfo TransportCatalogue::GetInfo(const StopQuery& query)
                      query.name,
                      {m_stop_to_buses.find(query.name)->second}
     };
+}
+
+const std::deque<Bus>& TransportCatalogue::GetBuses() const
+{
+    return m_dqbuses;
 }

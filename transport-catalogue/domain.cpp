@@ -1,6 +1,6 @@
 #include "domain.h"
 
-Stop::Stop(const std::string& n, const Coordinates& c)
+Stop::Stop(const std::string& n, const geo::Coordinates& c)
     : name {n},
       coord {c}
 {}

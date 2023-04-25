@@ -6,8 +6,8 @@
 
 using namespace std::string_literals;
 
-RequestHandler::RequestHandler(std::ostream& out)
-    : m_out {out}
+RequestHandler::RequestHandler()
+
 {}
 
 void RequestHandler::ProcessBaseRequests(const json::Reader& reader) {
@@ -38,7 +38,7 @@ void RequestHandler::ProcessBaseRequests(const json::Reader& reader) {
     }
 }
 
-void RequestHandler::ProcessStatRequests(const json::Reader &reader){
+void RequestHandler::ProcessStatRequests(const json::Reader &reader, std::ostream& out){
     json::Array results;
     const auto& requests {reader.GetStatRequests().AsArray()};
 
@@ -53,7 +53,10 @@ void RequestHandler::ProcessStatRequests(const json::Reader &reader){
         }
     }
 
-    json::PrintNode(json::Node{std::move(results)}, m_out);
-    m_out << std::endl;
+    json::PrintNode(json::Node{std::move(results)}, out);
+    out << std::endl;
 }
 
+const std::deque<Bus>& RequestHandler::GetMap() const {
+    return m_transport_catalogue.GetBuses();
+}

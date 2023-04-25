@@ -9,16 +9,23 @@
 #include <vector>
 #include <unordered_map>
 
-
 class TransportCatalogue
 {
 public:
+    enum class ResultStatus;
+    struct BusInfo;
+    struct StopInfo;
 
     void AddBus(const std::string_view bus_name,
                 const std::vector<std::string_view>& bus_stops);
-    void AddStop(std::string_view name, const Coordinates& c);
+    void AddStop(std::string_view name, const geo::Coordinates& c);
     void SetDistance(std::string_view name,
                      std::string_view other, int distance);
+
+    BusInfo GetInfo(const BusQuery& query) const;
+    StopInfo GetInfo(const StopQuery& query) const;
+
+    const std::deque<Bus>& GetBuses() const;
 
     enum class ResultStatus
     {
@@ -42,9 +49,6 @@ public:
         const std::string_view name;
         const std::set<std::string_view> buses;
     };
-
-    BusInfo GetInfo(const BusQuery& query) const;
-    StopInfo GetInfo(const StopQuery& query) const;
 
 private:
     std::deque<Stop> m_dqstops;

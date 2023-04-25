@@ -1,6 +1,6 @@
 #pragma once
 
-//namespace geo {
+namespace geo {
 
 struct Coordinates {
     double lat; // Широта
@@ -15,4 +15,4 @@ struct Coordinates {
 
 double ComputeDistance(Coordinates from, Coordinates to);
 
-//}  // namespace geo
+}  // namespace geo

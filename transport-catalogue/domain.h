@@ -11,6 +11,7 @@
  *
  */
 #include "geo.h"
+#include "svg.h"
 
 #include <string>
 #include <unordered_map>
@@ -19,7 +20,7 @@
 struct StopData
 {
     std::string_view name;
-    Coordinates coordinates;
+    geo::Coordinates coordinates;
     std::unordered_map<std::string_view, int> adjacent;
 };
 
@@ -38,10 +39,10 @@ struct StopQuery : public QueryCatalogue {};
 class Stop
 {
 public:
-    Stop(const std::string& n, const Coordinates& c);
+    Stop(const std::string& n, const geo::Coordinates& c);
 
     std::string name;
-    Coordinates coord;
+    geo::Coordinates coord;
 
     bool operator==(const Stop& other) const;
 };
@@ -71,3 +72,23 @@ public:
 };
 
 using BusPtrConst = const Bus*;
+
+struct RenderSettings
+{
+    double width {0.0};
+    double height {0.0};
+    double padding {0.0};
+    double line_width {0.0};
+    double stop_radius {0.0};
+
+    int bus_label_font_size {0};
+    geo::Coordinates bus_label_offset {0.0, 0.0};
+
+    int stop_label_font_size {0};
+    geo::Coordinates stop_label_offset {0.0, 0.0};
+
+    svg::Color underlayer_color{};
+    double underlayer_width {0.0};
+
+    std::vector<svg::Color> color_palette{};
+};
