@@ -30,6 +30,3 @@ size_t PairStopsHasher::operator() (const PairStops stops) const {
     size_t h_second = hasher(stops.second);
     return h_first + h_second * 37;
 }
-
-
-

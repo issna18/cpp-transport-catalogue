@@ -5,6 +5,54 @@ namespace svg {
 
 using namespace std::literals;
 
+
+Rgb::Rgb(uint8_t r, uint8_t g, uint8_t b)
+        : red {r},
+          green {g},
+          blue {b}
+    {}
+
+
+Rgba::Rgba(uint8_t r, uint8_t g, uint8_t b, double op)
+        : red {r},
+          green {g},
+          blue {b},
+          opacity {op}
+    {}
+
+void ColorPrinter::operator()(std::monostate) const {
+    out << "none"s;
+}
+
+void ColorPrinter::operator()(const std::string& str) const {
+    out << str;
+}
+
+void ColorPrinter::operator()(const Rgb& rgb) const {
+    int red = rgb.red;
+    int green = rgb.green;
+    int blue = rgb.blue;
+    out << "rgb("s << red
+        << ","s << green
+        << ","s << blue << ")"s;
+}
+
+void ColorPrinter::operator()(const Rgba& rgba) const {
+    int red = rgba.red;
+    int green = rgba.green;
+    int blue = rgba.blue;
+    double opacity = rgba.opacity;
+    out << "rgba("s << red
+        << ","s << green
+        << ","s << blue
+        << ","s << opacity << ")"s;
+}
+
+Point::Point(double ax, double ay)
+        : x {ax},
+          y {ay}
+    {}
+
 std::ostream& operator<<(std::ostream& out, const StrokeLineCap& line_cap) {
     switch (line_cap) {
     case StrokeLineCap::BUTT: out << "butt"sv; break;
@@ -34,10 +82,7 @@ std::ostream& operator<<(std::ostream& output, const Color& color) {
 
 void Object::Render(const RenderContext& context) const {
     context.RenderIndent();
-
-    // Делегируем вывод тега своим подклассам
     RenderObject(context);
-
     context.out << std::endl;
 }
 
@@ -149,9 +194,10 @@ void Document::AddPtr(std::unique_ptr<Object>&& obj) {
 void Document::Render(std::ostream& out) const {
     out << "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"sv << std::endl;
     out << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\">"sv << std::endl;
-    RenderContext ctx(out, 2);
+    //RenderContext ctx(out, 2);
     for (const auto& obj : objects_) {
-        obj->Render(ctx.Indented());
+        obj->Render(out);
+        //obj->Render(ctx.Indented());
     }
     out << "</svg>\n"sv;
 }

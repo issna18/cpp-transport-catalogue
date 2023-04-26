@@ -12,7 +12,7 @@ int main() {
 
     RequestHandler request_handler;
     request_handler.ProcessBaseRequests(input);
-    //request_handler.ProcessStatRequests(input);
+    request_handler.ProcessStatRequests(input);
 
     renderer.Draw(request_handler.GetMap());
 

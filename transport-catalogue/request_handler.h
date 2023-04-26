@@ -16,5 +16,4 @@ public:
 
 private:
     TransportCatalogue m_transport_catalogue;
-    //std::ostream& m_out;
 };

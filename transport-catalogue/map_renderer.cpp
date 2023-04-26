@@ -59,7 +59,7 @@ svg::Polyline MapRenderer::MakeRoute(const std::vector<StopPtrConst>& stops,
     svg::Polyline route;
     route.SetFillColor({})
             .SetStrokeColor(color)
-            .SetStrokeWidth(static_cast<int>(m_settings.line_width))
+            .SetStrokeWidth(m_settings.line_width)
             .SetStrokeLineCap(svg::StrokeLineCap::ROUND)
             .SetStrokeLineJoin(svg::StrokeLineJoin::ROUND);
 

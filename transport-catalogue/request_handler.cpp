@@ -40,7 +40,9 @@ void RequestHandler::ProcessBaseRequests(const json::Reader& reader) {
 
 void RequestHandler::ProcessStatRequests(const json::Reader &reader, std::ostream& out){
     json::Array results;
-    const auto& requests {reader.GetStatRequests().AsArray()};
+    const auto& node {reader.GetStatRequests()};
+    if (!node.IsArray()) return;
+    const auto& requests {node.AsArray()};
 
     for (const json::Node& req : requests) {
         bool is_bus {"Bus"s == req.AsMap().at("type"s).AsString()};
@@ -53,8 +55,10 @@ void RequestHandler::ProcessStatRequests(const json::Reader &reader, std::ostrea
         }
     }
 
-    json::PrintNode(json::Node{std::move(results)}, out);
-    out << std::endl;
+    if (!results.empty()) {
+        json::PrintNode(json::Node{std::move(results)}, out);
+        out << std::endl;
+    }
 }
 
 const std::deque<Bus>& RequestHandler::GetMap() const {

@@ -15,15 +15,18 @@ Reader::Reader(std::istream& in)
 
 const Node& Reader::GetBaseRequests() const {
     return m_json.GetRoot().AsMap().at("base_requests");
-};
+}
 
 const Node& Reader::GetStatRequests() const {
-    return m_json.GetRoot().AsMap().at("stat_requests");
-};
+    if (m_json.GetRoot().AsMap().count("stat_requests")) {
+        return m_json.GetRoot().AsMap().at("stat_requests");
+    }
+    return empty;
+}
 
 const Node& Reader::GetRenderSettings() const {
     return m_json.GetRoot().AsMap().at("render_settings");
-};
+}
 
 
 Node ToJSON(const TransportCatalogue::BusInfo& info) {

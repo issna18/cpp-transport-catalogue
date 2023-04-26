@@ -13,11 +13,7 @@ namespace svg {
 
 struct Rgb {
     Rgb()  = default;
-    Rgb(uint8_t red, uint8_t green, uint8_t blue)
-        : red {red},
-          green {green},
-          blue {blue}
-    {}
+    Rgb(uint8_t r, uint8_t g, uint8_t b);
 
     uint8_t red {0};
     uint8_t green {0};
@@ -26,12 +22,7 @@ struct Rgb {
 
 struct Rgba {
     Rgba() = default;
-    Rgba(uint8_t red, uint8_t green, uint8_t blue, double opacity)
-        : red {red},
-          green {green},
-          blue {blue},
-          opacity {opacity}
-    {}
+    Rgba(uint8_t r, uint8_t g, uint8_t b, double op);
 
     uint8_t red {0};
     uint8_t green {0};
@@ -39,13 +30,18 @@ struct Rgba {
     double opacity {1.0};
 };
 
-using Color = std::variant<std::monostate, std::string, Rgb, Rgba>;
+struct ColorPrinter {
 
-// Объявив в заголовочном файле константу со спецификатором inline,
-// мы сделаем так, что она будет одной на все единицы трансляции,
-// которые подключают этот заголовок.
-// В противном случае каждая единица трансляции будет использовать свою копию этой константы
-inline const Color NoneColor{"none"};
+    std::ostream& out;
+
+    void operator()(std::monostate) const;
+    void operator()(const std::string& str) const;
+    void operator()(const Rgb& rgb) const;
+    void operator()(const Rgba& rgba) const;
+};
+
+using Color = std::variant<std::monostate, std::string, Rgb, Rgba>;
+inline const Color NoneColor{std::monostate()};
 
 enum class StrokeLineCap {
     BUTT,
@@ -63,17 +59,13 @@ enum class StrokeLineJoin {
 
 struct Point {
     Point() = default;
-    Point(double ax, double ay)
-        : x {ax},
-          y {ay}
-    {}
+    Point(double ax, double ay);
 
     double x {0};
     double y {0};
 };
 
-/*
- * Вспомогательная структура, хранящая контекст для вывода SVG-документа с отступами.
+/*Вспомогательная структура, хранящая контекст для вывода SVG-документа с отступами.
  * Хранит ссылку на поток вывода, текущее значение и шаг отступа при выводе элемента
  */
 struct RenderContext {
@@ -102,11 +94,10 @@ struct RenderContext {
     int indent {0};
 };
 
-/*
- * Абстрактный базовый класс Object служит для унифицированного хранения
- * конкретных тегов SVG-документа
- * Реализует паттерн "Шаблонный метод" для вывода содержимого тега
- */
+std::ostream& operator<<(std::ostream& out, const StrokeLineCap& line_cap);
+std::ostream& operator<<(std::ostream& out, const StrokeLineJoin& line_join);
+std::ostream& operator<<(std::ostream& out, const Color& color);
+
 class Object {
 public:
     void Render(const RenderContext& context) const;
@@ -116,30 +107,6 @@ public:
 private:
     virtual void RenderObject(const RenderContext& context) const = 0;
 };
-
-std::ostream& operator<<(std::ostream& out, const StrokeLineCap& line_cap);
-
-std::ostream& operator<<(std::ostream& out, const StrokeLineJoin& line_join);
-
-struct ColorPrinter {
-
-    std::ostream& out;
-
-    void operator()(std::monostate) const {
-        out << std::string("none");
-    }
-    void operator()(const std::string& str) const {
-        out << str;
-    }
-    void operator()(const Rgb& rgb) const {
-        out << "rgb(" << static_cast<int>(rgb.red) << "," << static_cast<int>(rgb.green) << "," << static_cast<int>(rgb.blue) << ")";
-    }
-    void operator()(const Rgba& rgba) const {
-        out << "rgba(" << static_cast<int>(rgba.red) << "," << static_cast<int>(rgba.green) << "," << static_cast<int>(rgba.blue) << "," << rgba.opacity << ")";
-    }
-};
-
-std::ostream& operator<<(std::ostream& out, const Color& color);
 
 template <typename Owner>
 class PathProps {
@@ -154,7 +121,7 @@ public:
         return AsOwner();
     }
 
-    Owner& SetStrokeWidth(int width) {
+    Owner& SetStrokeWidth(double width) {
         width_ = width;
         return AsOwner();
     }
@@ -176,14 +143,10 @@ protected:
         using namespace std::literals;
 
         if (fill_color_) {
-            out << " fill=\""sv;
-            std::visit(ColorPrinter{ std::cout }, *fill_color_);
-            out << "\""sv;
+            out << " fill=\""sv << *fill_color_ << "\""sv;
         }
         if (stroke_color_) {
-            out << " stroke=\""sv;
-            std::visit(ColorPrinter{ std::cout }, *stroke_color_);
-            out << "\""sv;
+            out << " stroke=\""sv << *stroke_color_ << "\""sv;
         }
         if (width_) {
             out << " stroke-width=\""sv << *width_ << "\""sv;
@@ -205,7 +168,7 @@ private:
 
     std::optional<Color> fill_color_;
     std::optional<Color> stroke_color_;
-    std::optional<int> width_;
+    std::optional<double> width_;
     std::optional<StrokeLineJoin> stroke_line_join_;
     std::optional<StrokeLineCap> stroke_line_cap_;
 };

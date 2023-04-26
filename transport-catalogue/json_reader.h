@@ -24,6 +24,7 @@ public:
 
 private:
     json::Document m_json;
+    json::Node empty {};
 };
 
 } // namespace json
