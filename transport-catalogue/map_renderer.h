@@ -78,12 +78,13 @@ public:
 
 private:
     double padding_;
-    double min_lon_ = 0;
-    double max_lat_ = 0;
-    double zoom_coeff_ = 0;
+    double min_lon_ = 0.0;
+    double max_lat_ = 0.0;
+    double zoom_coeff_ = 0.0;
 };
 
 } //sphere
+
 
 class MapRenderer {
 public:
@@ -95,5 +96,9 @@ private:
     svg::Polyline MakeRoute(const std::vector<StopPtrConst>& stops,
                             const sphere::Projector& projector,
                             const svg::Color &color);
+    svg::Text MakeBusLabel(std::string_view text, const svg::Point &point, const svg::Color& color);
+    svg::Text MakeBgBusLabel(std::string_view text, const svg::Point &point);
+    svg::Text MakeStopLabel(std::string_view text, const svg::Point &point, const svg::Color& color);
+    svg::Text MakeBgStopLabel(std::string_view text, const svg::Point &point);
     RenderSettings m_settings;
 };

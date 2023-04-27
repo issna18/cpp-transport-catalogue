@@ -77,7 +77,7 @@ BusData BusDataFromJSON(const Node& node) {
         stops = std::move(all_stops);
     }
 
-    return {node.AsMap().at("name"s).AsString(), std::move(stops)};
+    return {node.AsMap().at("name"s).AsString(), std::move(stops), is_roundtrip};
 }
 
 StopData StopDataFromJSON(const Node& node) {

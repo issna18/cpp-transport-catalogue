@@ -101,7 +101,7 @@ Circle& Circle::SetRadius(double radius)  {
 void Circle::RenderObject(const RenderContext& context) const {
     auto& out = context.out;
     out << "<circle cx=\""sv << center_.x << "\" cy=\""sv << center_.y << "\" "sv;
-    out << "r=\""sv << radius_ << "\" "sv;
+    out << "r=\""sv << radius_ << "\""sv;
     RenderAttrs(context.out);
     out << "/>"sv;
 }
@@ -171,13 +171,13 @@ Text& Text::SetData(std::string data) {
 void Text::RenderObject(const RenderContext& context) const {
      auto& out = context.out;
 
-    out << "<text ";
+    out << "<text";
     RenderAttrs(out);
-    out << "x=\"" << x_
-            << "\" y=\"" << y_
-            << "\" dx=\"" << dx_
-            << "\" dy=\"" << dy_
-            << "\" font-size=\"" << size_;
+    out << " x=\"" << x_
+        << "\" y=\"" << y_
+        << "\" dx=\"" << dx_
+        << "\" dy=\"" << dy_
+        << "\" font-size=\"" << size_;
     if(!font_family_.empty()) out << "\" font-family=\"" << font_family_;
     if(!font_weight_.empty()) out << "\" font-weight=\"" << font_weight_;
 
@@ -194,10 +194,10 @@ void Document::AddPtr(std::unique_ptr<Object>&& obj) {
 void Document::Render(std::ostream& out) const {
     out << "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>"sv << std::endl;
     out << "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\">"sv << std::endl;
-    //RenderContext ctx(out, 2);
+    RenderContext ctx(out, 2);
     for (const auto& obj : objects_) {
-        obj->Render(out);
-        //obj->Render(ctx.Indented());
+        //obj->Render(out);
+        obj->Render(ctx.Indented());
     }
     out << "</svg>\n"sv;
 }

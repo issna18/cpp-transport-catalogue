@@ -24,8 +24,12 @@ struct StopData
     std::unordered_map<std::string_view, int> adjacent;
 };
 
-using BusData = std::pair<std::string_view, std::vector<std::string_view>>;
-
+struct BusData
+{
+    std::string_view name;
+    std::vector<std::string_view> stops;
+    bool is_roundtrip {false};
+};
 
 struct QueryCatalogue
 {
@@ -60,13 +64,14 @@ private:
 class Bus {
 public:
     Bus(const std::string& n, const std::vector<StopPtrConst>& s,
-        size_t num_u, double g_len, int r_len);
+        size_t num_u, double g_len, int r_len, bool is_round);
 
     std::string name;
     std::vector<StopPtrConst> stops;
     size_t num_unique;
     double geo_length;
     int route_length;
+    bool is_roundtrip {false};
 
     bool operator==(const Bus& other) const;
 };
@@ -82,13 +87,14 @@ struct RenderSettings
     double stop_radius {0.0};
 
     int bus_label_font_size {0};
-    geo::Coordinates bus_label_offset {0.0, 0.0};
+    svg::Point bus_label_offset {0.0, 0.0};
 
     int stop_label_font_size {0};
-    geo::Coordinates stop_label_offset {0.0, 0.0};
+    svg::Point stop_label_offset {0.0, 0.0};
 
-    svg::Color underlayer_color{};
+    svg::Color underlayer_color {};
     double underlayer_width {0.0};
 
-    std::vector<svg::Color> color_palette{};
+    std::vector<svg::Color> color_palette {};
+    std::string font_family {"Verdana"};
 };

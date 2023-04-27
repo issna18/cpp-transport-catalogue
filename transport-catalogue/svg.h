@@ -61,8 +61,8 @@ struct Point {
     Point() = default;
     Point(double ax, double ay);
 
-    double x {0};
-    double y {0};
+    double x {0.0};
+    double y {0.0};
 };
 
 /*Вспомогательная структура, хранящая контекст для вывода SVG-документа с отступами.

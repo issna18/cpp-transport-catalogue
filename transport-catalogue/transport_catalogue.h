@@ -17,7 +17,8 @@ public:
     struct StopInfo;
 
     void AddBus(const std::string_view bus_name,
-                const std::vector<std::string_view>& bus_stops);
+                const std::vector<std::string_view>& bus_stops,
+                bool is_roundtrip = false);
     void AddStop(std::string_view name, const geo::Coordinates& c);
     void SetDistance(std::string_view name,
                      std::string_view other, int distance);

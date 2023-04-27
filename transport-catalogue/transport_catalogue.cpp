@@ -3,7 +3,8 @@
 #include <unordered_set>
 
 void TransportCatalogue::AddBus(const std::string_view bus_name,
-                                const std::vector<std::string_view>& bus_stops) {
+                                const std::vector<std::string_view>& bus_stops,
+                                bool is_roudtrip) {
     std::vector<StopPtrConst> v_s;
     v_s.reserve(bus_stops.size());
     std::unordered_set<std::string_view> unique_stops;
@@ -36,7 +37,7 @@ void TransportCatalogue::AddBus(const std::string_view bus_name,
 
     BusPtrConst bus = &m_dqbuses.emplace_back(Bus(std::string(bus_name), v_s,
                                                   unique_stops.size(), distance,
-                                                  length));
+                                                  length, is_roudtrip));
     m_names_buses.emplace(bus->name, bus);
     for (const auto & stop_name : unique_stops) {
         m_stop_to_buses[stop_name].insert(bus->name);

@@ -13,12 +13,14 @@ Bus::Bus(const std::string& n,
          const std::vector<StopPtrConst>& s,
          size_t num_u,
          double g_len,
-         int r_len)
+         int r_len,
+         bool is_round)
     : name {n},
       stops {s},
       num_unique {num_u},
       geo_length {g_len},
-      route_length {r_len}
+      route_length {r_len},
+      is_roundtrip {is_round}
 {}
 
 bool Bus::operator==(const Bus& other) const {

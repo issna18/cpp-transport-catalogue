@@ -34,7 +34,7 @@ void RequestHandler::ProcessBaseRequests(const json::Reader& reader) {
         }
     }
     for (const BusData& bd : m_buses){
-        m_transport_catalogue.AddBus(bd.first, bd.second);
+        m_transport_catalogue.AddBus(bd.name, bd.stops, bd.is_roundtrip);
     }
 }
 
