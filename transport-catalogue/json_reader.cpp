@@ -29,36 +29,36 @@ const Node& Reader::GetRenderSettings() const {
 }
 
 
-Node ToJSON(const TransportCatalogue::BusInfo& info) {
-    Dict result;
-    result["request_id"s] = Node(info.request_id);
+Node ToJSON(int request_id, const TransportCatalogue::BusInfo& info) {
+    Dict result {
+        {"request_id"s, Node(request_id)}
+    };
     if (info.status == TransportCatalogue::ResultStatus::NotFound) {
-        result["error_message"s] = Node("not found"s);
+        result.emplace("error_message"s, Node("not found"s));
         return Node(std::move(result));
     }
-    result["curvature"s] = Node(info.route_length/info.geo_length);
-    result["route_length"s] = Node(info.route_length);
-    result["stop_count"s] = Node(static_cast<int>(info.num_stops));
-    result["unique_stop_count"s] = Node(static_cast<int>(info.num_unique));
+    result.emplace("curvature"s, Node(info.route_length/info.geo_length));
+    result.emplace("route_length"s, Node(info.route_length));
+    result.emplace("stop_count"s, Node(static_cast<int>(info.num_stops)));
+    result.emplace("unique_stop_count"s, Node(static_cast<int>(info.num_unique)));
 
     return Node(std::move(result));
 }
 
-Node ToJSON(const TransportCatalogue::StopInfo& info) {
-    Dict result;
-
-    result["request_id"s] = Node(info.request_id);
+Node ToJSON(int request_id, const TransportCatalogue::StopInfo& info) {
+    Dict result {
+        {"request_id"s, Node(request_id)}
+    };
     if (info.status == TransportCatalogue::ResultStatus::NotFound) {
-        result["error_message"s] = Node("not found"s);
+        result.emplace("error_message"s, Node("not found"s));
         return Node(std::move(result));
     }
     Array buses;
     for (const auto& bus : info.buses) {
-        buses.push_back(Node(std::string(bus)));
+        buses.emplace_back(Node(std::string(bus)));
     }
-    result["buses"s] = Node(std::move(buses));
-
-    return Node(result);
+    result.emplace("buses"s, std::move(buses));
+    return Node(std::move(result));
 }
 
 BusData BusDataFromJSON(const Node& node) {
@@ -93,7 +93,6 @@ StopData StopDataFromJSON(const Node& node) {
     }
     return {node.AsMap().at("name"s).AsString(), geo::Coordinates{c_lat, c_long}, std::move(adjacent)};
 }
-
 
 RenderSettings GetSettingsFromJSON(const Node& node) {
 

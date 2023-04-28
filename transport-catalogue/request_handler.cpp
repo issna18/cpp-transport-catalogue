@@ -1,13 +1,15 @@
 #include "request_handler.h"
+#include "map_renderer.h"
 
 #include <string>
+#include <sstream>
 #include <string_view>
 #include <vector>
 
 using namespace std::string_literals;
+using namespace std::string_view_literals;
 
 RequestHandler::RequestHandler()
-
 {}
 
 void RequestHandler::ProcessBaseRequests(const json::Reader& reader) {
@@ -16,9 +18,9 @@ void RequestHandler::ProcessBaseRequests(const json::Reader& reader) {
 
     const auto& requests {reader.GetBaseRequests().AsArray()};
     for (const json::Node& req : requests) {
-        if (req.AsMap().at("type"s).AsString() == "Bus"s) {
+        if (req.AsMap().at("type"s).AsString() == "Bus"sv) {
             m_buses.emplace_back(json::BusDataFromJSON(req));
-        } else if (req.AsMap().at("type"s).AsString() == "Stop"s) {
+        } else if (req.AsMap().at("type"s).AsString() == "Stop"sv) {
             m_stops.emplace_back(json::StopDataFromJSON(req));
         } else {
             throw std::invalid_argument("Invalid Request Type");
@@ -45,13 +47,23 @@ void RequestHandler::ProcessStatRequests(const json::Reader &reader, std::ostrea
     const auto& requests {node.AsArray()};
 
     for (const json::Node& req : requests) {
-        bool is_bus {"Bus"s == req.AsMap().at("type"s).AsString()};
+        const std::string_view type {req.AsMap().at("type"s).AsString()};
         int id {req.AsMap().at("id"s).AsInt()};
-        std::string name {req.AsMap().at("name"s).AsString()};
-        if (is_bus) {
-            results.push_back(json::ToJSON(m_transport_catalogue.GetInfo(BusQuery{id, name})));
-        } else {
-            results.push_back(json::ToJSON(m_transport_catalogue.GetInfo(StopQuery{id, name})));
+
+        if (type == "Bus"sv) {
+            const std::string& name {req.AsMap().at("name"s).AsString()};
+            results.emplace_back(json::ToJSON(id, m_transport_catalogue.GetInfo(TransportCatalogue::BusQuery{name})));
+        } else if (type == "Stop"sv) {
+            const std::string& name {req.AsMap().at("name"s).AsString()};
+            results.emplace_back(json::ToJSON(id, m_transport_catalogue.GetInfo(TransportCatalogue::StopQuery{name})));
+        } else if (type == "Map"sv) {
+            MapRenderer renderer(json::GetSettingsFromJSON(reader.GetRenderSettings()));
+            std::stringstream out;
+            renderer.Draw(m_transport_catalogue.GetBuses(), out);
+            results.emplace_back(json::Dict{
+                                     {"request_id"s, json::Node(id)},
+                                     {"map"s, json::Node(out.str())},
+                                 });
         }
     }
 

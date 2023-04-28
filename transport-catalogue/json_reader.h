@@ -8,8 +8,10 @@
 
 namespace json {
 
-Node ToJSON(const TransportCatalogue::BusInfo& info);
-Node ToJSON(const TransportCatalogue::StopInfo& info);
+Node ToJSON(int request_id, const TransportCatalogue::BusInfo& info);
+Node ToJSON(int request_id, const TransportCatalogue::StopInfo& info);
+Node ToJSON(int request_id, const TransportCatalogue::MapInfo& info);
+
 StopData StopDataFromJSON(const Node& node);
 BusData BusDataFromJSON(const Node& node);
 RenderSettings GetSettingsFromJSON(const Node& node);

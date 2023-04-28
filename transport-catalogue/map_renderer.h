@@ -89,6 +89,7 @@ private:
 class MapRenderer {
 public:
     MapRenderer() = default;
+    MapRenderer(const RenderSettings& settings) : m_settings {settings} {};
     void SetSettings(const RenderSettings& settings);
     void Draw(const std::deque<Bus>& buses, std::ostream& out = std::cout);
 

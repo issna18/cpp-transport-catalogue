@@ -31,15 +31,6 @@ struct BusData
     bool is_roundtrip {false};
 };
 
-struct QueryCatalogue
-{
-    int id {0};
-    std::string name;
-};
-
-struct BusQuery : public QueryCatalogue {};
-struct StopQuery : public QueryCatalogue {};
-
 class Stop
 {
 public:
@@ -96,5 +87,4 @@ struct RenderSettings
     double underlayer_width {0.0};
 
     std::vector<svg::Color> color_palette {};
-    std::string font_family {"Verdana"};
 };

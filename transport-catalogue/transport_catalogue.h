@@ -13,8 +13,12 @@ class TransportCatalogue
 {
 public:
     enum class ResultStatus;
+
+    using MapInfo = const std::deque<Bus>;
     struct BusInfo;
     struct StopInfo;
+    struct BusQuery;
+    struct StopQuery;
 
     void AddBus(const std::string_view bus_name,
                 const std::vector<std::string_view>& bus_stops,
@@ -26,7 +30,7 @@ public:
     BusInfo GetInfo(const BusQuery& query) const;
     StopInfo GetInfo(const StopQuery& query) const;
 
-    const std::deque<Bus>& GetBuses() const;
+    MapInfo& GetBuses() const;
 
     enum class ResultStatus
     {
@@ -36,8 +40,7 @@ public:
 
     struct BusInfo {
         ResultStatus status {ResultStatus::NotFound};
-        int request_id {0};
-        const std::string_view name { };
+        const std::string_view name;
         size_t num_stops {0};
         size_t num_unique {0};
         double geo_length {0.0};
@@ -46,10 +49,12 @@ public:
 
     struct StopInfo {
         ResultStatus status {ResultStatus::NotFound};
-        int request_id {0};
         const std::string_view name;
         const std::set<std::string_view> buses;
     };
+
+    struct BusQuery { std::string name; };
+    struct StopQuery { std::string name; };
 
 private:
     std::deque<Stop> m_dqstops;
