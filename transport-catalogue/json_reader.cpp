@@ -135,7 +135,7 @@ RenderSettings GetSettingsFromJSON(const Node& node) {
     settings.stop_label_offset = {sl_offset[0].AsDouble(), sl_offset[1].AsDouble()};
 
     settings.underlayer_color = ColorFromJSON(json.at("underlayer_color"s));
-    settings.underlayer_width = json.at("underlayer_width").AsDouble();
+    settings.underlayer_width = json.at("underlayer_width"s).AsDouble();
 
     const auto& palette {json.at("color_palette"s).AsArray()};
     for (const Node& j_color : palette) {

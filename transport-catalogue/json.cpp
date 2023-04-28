@@ -314,7 +314,7 @@ const Node& Document::GetRoot() const {
 }
 
 Document Load(std::istream& input) {
-    return Document{LoadNode(input)};
+    return Document {LoadNode(input)};
 }
 
 bool Document::operator==(const Document& rhs) const {

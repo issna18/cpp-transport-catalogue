@@ -72,7 +72,3 @@ void RequestHandler::ProcessStatRequests(const json::Reader &reader, std::ostrea
         out << std::endl;
     }
 }
-
-const std::deque<Bus>& RequestHandler::GetMap() const {
-    return m_transport_catalogue.GetBuses();
-}

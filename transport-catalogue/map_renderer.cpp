@@ -3,6 +3,8 @@
 #include <set>
 #include <map>
 
+using namespace std::string_literals;
+
 namespace sphere {
 
 bool IsZero(double value) {
@@ -13,14 +15,6 @@ bool IsZero(double value) {
 
 void MapRenderer::SetSettings(const RenderSettings& settings) {
     m_settings = settings;
-
-/*
-    std::cout << m_settings.width << " "
-              << m_settings.height << " "
-              << m_settings.padding << " "
-              << m_settings.underlayer_color
-              << std::endl;
-*/
 }
 
 void MapRenderer::Draw(const std::deque<Bus>& buses, std::ostream& out)
@@ -83,11 +77,11 @@ void MapRenderer::Draw(const std::deque<Bus>& buses, std::ostream& out)
         svg::Circle circle;
         circle.SetCenter(projector(coord))
                 .SetRadius(m_settings.stop_radius)
-                .SetFillColor("white");
+                .SetFillColor("white"s);
         circle_layer.push_back(circle);
 
         stop_layer.emplace_back(MakeBgStopLabel(stop, projector(coord)));
-        stop_layer.emplace_back(MakeStopLabel(stop, projector(coord),"black"));
+        stop_layer.emplace_back(MakeStopLabel(stop, projector(coord),"black"s));
     }
 
     for(auto&& item : routes_layer) {
@@ -129,21 +123,13 @@ svg::Polyline MapRenderer::MakeRoute(const std::vector<StopPtrConst>& stops,
 svg::Text MapRenderer::MakeBusLabel(std::string_view text,
                                     const svg::Point& point,
                                     const svg::Color& color) {
-    /*
-    x и y — координаты соответствующей остановки;
-    смещение dx и dy равно настройке bus_label_offset;
-    размер шрифта font-size равен настройке bus_label_font_size;
-    название шрифта font-family — "Verdana";
-    толщина шрифта font-weight — "bold".
-    содержимое — название автобуса.
-    */
     svg::Text label;
     label.SetFillColor(color)
             .SetPosition(point)
             .SetOffset(m_settings.bus_label_offset)
             .SetFontSize(m_settings.bus_label_font_size)
-            .SetFontFamily("Verdana")
-            .SetFontWeight("bold")
+            .SetFontFamily("Verdana"s)
+            .SetFontWeight("bold"s)
             .SetData(std::string(text));
     return label;
 }
@@ -166,7 +152,7 @@ svg::Text MapRenderer::MakeStopLabel(std::string_view text,
     label.SetPosition(point)
          .SetOffset(m_settings.stop_label_offset)
          .SetFontSize(m_settings.stop_label_font_size)
-         .SetFontFamily("Verdana")
+         .SetFontFamily("Verdana"s)
          .SetData(std::string(text))
          .SetFillColor(color);
     return label;

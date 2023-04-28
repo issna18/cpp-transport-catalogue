@@ -1,6 +1,5 @@
 #pragma once
 
-#include "domain.h"
 #include "json.h"
 #include "transport_catalogue.h"
 
