@@ -91,15 +91,15 @@ public:
     MapRenderer() = default;
     MapRenderer(const RenderSettings& settings) : m_settings {settings} {};
     void SetSettings(const RenderSettings& settings);
-    void Draw(const std::deque<Bus>& buses, std::ostream& out = std::cout);
+    void Draw(const std::deque<Bus>& buses, std::ostream& out = std::cout) const;
 
 private:
     svg::Polyline MakeRoute(const std::vector<StopPtrConst>& stops,
                             const sphere::Projector& projector,
-                            const svg::Color &color);
-    svg::Text MakeBusLabel(std::string_view text, const svg::Point &point, const svg::Color& color);
-    svg::Text MakeBgBusLabel(std::string_view text, const svg::Point &point);
-    svg::Text MakeStopLabel(std::string_view text, const svg::Point &point, const svg::Color& color);
-    svg::Text MakeBgStopLabel(std::string_view text, const svg::Point &point);
+                            const svg::Color &color) const;
+    svg::Text MakeBusLabel(std::string_view text, const svg::Point &point, const svg::Color& color) const;
+    svg::Text MakeBgBusLabel(std::string_view text, const svg::Point &point) const;
+    svg::Text MakeStopLabel(std::string_view text, const svg::Point &point, const svg::Color& color) const;
+    svg::Text MakeBgStopLabel(std::string_view text, const svg::Point &point) const;
     RenderSettings m_settings;
 };

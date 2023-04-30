@@ -44,9 +44,26 @@ void TransportCatalogue::AddBus(const std::string_view bus_name,
     }
 }
 
+void TransportCatalogue::AddBuses(const std::vector<BusData>& buses) {
+    for (const BusData& bd : buses) {
+        AddBus(bd.name, bd.stops, bd.is_roundtrip);
+    }
+}
+
 void TransportCatalogue::AddStop(std::string_view name, const geo::Coordinates& c) {
     StopPtrConst stop = &m_dqstops.emplace_back(Stop(std::string(name), c));
     m_names_stops.emplace(stop->name, stop);
+}
+
+void TransportCatalogue::AddStops(const std::vector<StopData>& stops) {
+    for (const StopData& sd: stops) {
+        AddStop(sd.name, sd.coordinates);
+    }
+    for (const StopData& sd : stops) {
+        for (const auto& [other, distance] : sd.adjacent) {
+            SetDistance(sd.name, other, distance);
+        }
+    }
 }
 
 void TransportCatalogue::SetDistance(std::string_view name,
@@ -58,12 +75,13 @@ void TransportCatalogue::SetDistance(std::string_view name,
     m_stops_distance[key] = distance;
 }
 
-TransportCatalogue::BusInfo TransportCatalogue::GetInfo(const BusQuery& query) const
+BusInfo TransportCatalogue::GetBusInfo(int id, std::string_view name) const
 {
-    if (m_names_buses.count(query.name) == 0) {
+    if (m_names_buses.count(name) == 0) {
         return BusInfo {
+            id,
             ResultStatus::NotFound,
-            query.name,
+            name,
             0,
             0,
             0,
@@ -71,8 +89,9 @@ TransportCatalogue::BusInfo TransportCatalogue::GetInfo(const BusQuery& query) c
         };
     }
 
-    const Bus* bus_ptr {m_names_buses.at(query.name)};
+    const Bus* bus_ptr {m_names_buses.at(name)};
     return BusInfo {
+        id,
         ResultStatus::Success,
         bus_ptr->name,
         bus_ptr->stops.size(),
@@ -83,23 +102,36 @@ TransportCatalogue::BusInfo TransportCatalogue::GetInfo(const BusQuery& query) c
 }
 
 
-TransportCatalogue::StopInfo TransportCatalogue::GetInfo(const StopQuery& query) const
+StopInfo TransportCatalogue::GetStopInfo(int id, std::string_view name) const
 {
-    if (m_names_stops.count(query.name) == 0) {
-        return StopInfo {ResultStatus::NotFound, query.name, {}};
+    if (m_names_stops.count(name) == 0) {
+        return StopInfo {id, ResultStatus::NotFound, name, {}};
     }
 
-    if (m_stop_to_buses.count(query.name) == 0) {
-        return StopInfo {ResultStatus::Success, query.name, {}};
+    if (m_stop_to_buses.count(name) == 0) {
+        return StopInfo {id, ResultStatus::Success, name, {}};
     }
 
-    return StopInfo {ResultStatus::Success,
-                     query.name,
-                     {m_stop_to_buses.find(query.name)->second}
+    return StopInfo {id, ResultStatus::Success,
+                     name,
+                     {m_stop_to_buses.find(name)->second}
     };
 }
 
-TransportCatalogue::MapInfo& TransportCatalogue::GetBuses() const
+const std::deque<Bus>& TransportCatalogue::GetBuses() const
 {
     return m_dqbuses;
 }
+
+Info BusQuery::Get(const TransportCatalogue& catalogue) const {
+    return catalogue.GetBusInfo(request_id, name);
+}
+
+Info StopQuery::Get(const TransportCatalogue& catalogue) const {
+    return catalogue.GetStopInfo(request_id, name);
+}
+
+Info MapQuery::Get(const TransportCatalogue& catalogue) const {
+    return MapInfo {request_id, catalogue.GetBuses()};
+}
+

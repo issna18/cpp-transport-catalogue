@@ -17,7 +17,7 @@ void MapRenderer::SetSettings(const RenderSettings& settings) {
     m_settings = settings;
 }
 
-void MapRenderer::Draw(const std::deque<Bus>& buses, std::ostream& out)
+void MapRenderer::Draw(const std::deque<Bus>& buses, std::ostream& out) const
 {
     svg::Document svg;
     std::vector<geo::Coordinates> all_coordinates;
@@ -105,7 +105,7 @@ void MapRenderer::Draw(const std::deque<Bus>& buses, std::ostream& out)
 
 svg::Polyline MapRenderer::MakeRoute(const std::vector<StopPtrConst>& stops,
                                      const sphere::Projector& projector,
-                                     const svg::Color& color)
+                                     const svg::Color& color) const
 {
     svg::Polyline route;
     route.SetFillColor({})
@@ -122,7 +122,8 @@ svg::Polyline MapRenderer::MakeRoute(const std::vector<StopPtrConst>& stops,
 
 svg::Text MapRenderer::MakeBusLabel(std::string_view text,
                                     const svg::Point& point,
-                                    const svg::Color& color) {
+                                    const svg::Color& color) const
+{
     svg::Text label;
     label.SetFillColor(color)
             .SetPosition(point)
@@ -134,7 +135,8 @@ svg::Text MapRenderer::MakeBusLabel(std::string_view text,
     return label;
 }
 
-svg::Text MapRenderer::MakeBgBusLabel(std::string_view text, const svg::Point &point){
+svg::Text MapRenderer::MakeBgBusLabel(std::string_view text, const svg::Point &point) const
+{
     svg::Text label {MakeBusLabel(text, point, m_settings.underlayer_color)};
     label.SetStrokeColor(m_settings.underlayer_color)
          .SetStrokeWidth(m_settings.underlayer_width)
@@ -146,7 +148,7 @@ svg::Text MapRenderer::MakeBgBusLabel(std::string_view text, const svg::Point &p
 
 svg::Text MapRenderer::MakeStopLabel(std::string_view text,
                                      const svg::Point &point,
-                                     const svg::Color& color)
+                                     const svg::Color& color) const
 {
     svg::Text label;
     label.SetPosition(point)
@@ -159,7 +161,7 @@ svg::Text MapRenderer::MakeStopLabel(std::string_view text,
 }
 
 svg::Text MapRenderer::MakeBgStopLabel(std::string_view text,
-                                       const svg::Point &point)
+                                       const svg::Point &point) const
 {
     svg::Text label {MakeStopLabel(text, point, m_settings.underlayer_color)};
     label.SetStrokeColor(m_settings.underlayer_color)

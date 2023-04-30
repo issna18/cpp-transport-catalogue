@@ -5,16 +5,20 @@
 #include <vector>
 #include <unordered_map>
 
-namespace json {
-
 using namespace std::string_literals;
+using namespace std::string_view_literals;
+
+namespace json {
 
 Reader::Reader(std::istream& in)
     : m_json {Load(in)}
 {}
 
 const Node& Reader::GetBaseRequests() const {
-    return m_json.GetRoot().AsMap().at("base_requests");
+    if (m_json.GetRoot().AsMap().count("base_requests"s)) {
+        return m_json.GetRoot().AsMap().at("base_requests"s);
+    }
+    return empty;
 }
 
 const Node& Reader::GetStatRequests() const {
@@ -25,15 +29,51 @@ const Node& Reader::GetStatRequests() const {
 }
 
 const Node& Reader::GetRenderSettings() const {
-    return m_json.GetRoot().AsMap().at("render_settings");
+    return m_json.GetRoot().AsMap().at("render_settings"s);
 }
 
+const std::pair<std::vector<StopData>, std::vector<BusData>> Reader::GetStopsAndBuses() const {
+    const auto& requests {GetBaseRequests().AsArray()};
+    std::vector<StopData> stops;
+    std::vector<BusData> buses;
 
-Node ToJSON(int request_id, const TransportCatalogue::BusInfo& info) {
+    for (const json::Node& req : requests) {
+        if (req.AsMap().at("type"s).AsString() == "Bus"sv) {
+            buses.emplace_back(json::BusDataFromJSON(req));
+        } else if (req.AsMap().at("type"s).AsString() == "Stop"sv) {
+            stops.emplace_back(json::StopDataFromJSON(req));
+        } else {
+            throw std::invalid_argument("Invalid Request Type");
+        }
+    }
+
+    return std::make_pair(std::move(stops), std::move(buses));
+}
+
+const std::vector<Request> Reader::GetRequests() const {
+    const auto& requests {GetStatRequests().AsArray()};
+    std::vector<Request> queries;
+
+    for (const json::Node& req : requests) {
+        const std::string_view type {req.AsMap().at("type"s).AsString()};
+        int id {req.AsMap().at("id"s).AsInt()};
+
+        if (type == "Bus"sv) {
+            queries.emplace_back(BusQuery {id, req.AsMap().at("name"s).AsString()});
+        } else if (type == "Stop"sv) {
+            queries.emplace_back(StopQuery {id, req.AsMap().at("name"s).AsString()});
+        } else if (type == "Map"sv) {
+            queries.emplace_back(MapQuery {id});
+        }
+    }
+    return queries;
+}
+
+Node ToJSON(const BusInfo& info) {
     Dict result {
-        {"request_id"s, Node(request_id)}
+        {"request_id"s, Node(info.request_id)}
     };
-    if (info.status == TransportCatalogue::ResultStatus::NotFound) {
+    if (info.status == ResultStatus::NotFound) {
         result.emplace("error_message"s, Node("not found"s));
         return Node(std::move(result));
     }
@@ -45,11 +85,11 @@ Node ToJSON(int request_id, const TransportCatalogue::BusInfo& info) {
     return Node(std::move(result));
 }
 
-Node ToJSON(int request_id, const TransportCatalogue::StopInfo& info) {
+Node ToJSON(const StopInfo& info) {
     Dict result {
-        {"request_id"s, Node(request_id)}
+        {"request_id"s, Node(info.request_id)}
     };
-    if (info.status == TransportCatalogue::ResultStatus::NotFound) {
+    if (info.status == ResultStatus::NotFound) {
         result.emplace("error_message"s, Node("not found"s));
         return Node(std::move(result));
     }
