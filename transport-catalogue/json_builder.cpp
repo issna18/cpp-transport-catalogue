@@ -44,9 +44,8 @@ KeyContext Builder::Key(std::string key) {
     if (nodes_stack_.empty()) throw std::logic_error("Json invalid");
 
     if (!nodes_stack_.back()->IsDict() || key_was_set) throw std::logic_error("Key not in Dict");
-    key_ = key;
+    key_ = std::move(key);
     key_was_set = true;
-
     return *this;
 }
 
@@ -59,16 +58,13 @@ Builder& Builder::Value(const Node::Value& value) {
     if (nodes_stack_.empty()) throw std::logic_error("Json invalid");
 
     if (nodes_stack_.back()->IsArray()) {
-        Node& back = nodes_stack_.back()->AsArray().emplace_back(Array{});
-        back = value;
+        nodes_stack_.back()->AsArray().emplace_back(value);
         return *this;
     }
-    if (nodes_stack_.back()->IsDict() && key_was_set) {
-        Node node;
-        node = value;
-        nodes_stack_.back()->AsDict().emplace(std::make_pair(key_, node));
-        key_was_set = false;
 
+    if (nodes_stack_.back()->IsDict() && key_was_set) {
+        nodes_stack_.back()->AsDict().emplace(std::make_pair(key_, value));
+        key_was_set = false;
         return *this;
     }
 
@@ -80,28 +76,27 @@ DictContext Builder::StartDict() {
     if (root_.IsNull()) {
         root_ = Node(Dict{});
         nodes_stack_.push_back(&root_);
-        return DictContext(*this);
+        return *this;
     }
 
     if (nodes_stack_.empty()) throw std::logic_error("Json invalid");
 
     if (nodes_stack_.back()->IsArray()) {
-        Node& back = nodes_stack_.back()->AsArray().emplace_back(Dict{});
+        Node& back {nodes_stack_.back()->AsArray().emplace_back(Dict{})};
         nodes_stack_.push_back(&back);
-
-        return DictContext(*this);;
+        return *this;
     }
 
     if (nodes_stack_.back()->IsDict()) {
         if (!key_was_set) throw std::logic_error("No key");
-        auto it = nodes_stack_.back()->AsDict().emplace(std::make_pair(key_, Dict{}));
+        auto it {nodes_stack_.back()->AsDict().emplace(std::make_pair(key_, Dict{}))};
         nodes_stack_.push_back(&(it.first->second));
         key_was_set = false;
-        return DictContext(*this);;
+        return *this;
     }
     throw std::logic_error("Json invalid");
 
-    return DictContext(*this);
+    return *this;
 }
 
 ArrayContext Builder::StartArray() {
@@ -114,15 +109,15 @@ ArrayContext Builder::StartArray() {
     if (nodes_stack_.empty()) throw std::logic_error("Json invalid");
 
     if (nodes_stack_.back()->IsArray()) {
-        Node& back = nodes_stack_.back()->AsArray().emplace_back(Array{});
+        Node& back {nodes_stack_.back()->AsArray().emplace_back(Array{})};
         nodes_stack_.push_back(&back);
-
         return *this;
     }
+
     if (nodes_stack_.back()->IsDict()) {
         if (!key_was_set) throw std::logic_error("No key");
 
-        auto it = nodes_stack_.back()->AsDict().emplace(std::make_pair(key_, Array{}));
+        auto it {nodes_stack_.back()->AsDict().emplace(std::make_pair(key_, Array{}))};
         nodes_stack_.push_back(&(it.first->second));
         key_was_set = false;
         return *this;
@@ -137,11 +132,13 @@ Builder& Builder::EndDict() {
     if (root_.IsNull()) {
         throw std::logic_error("Not a dict");
     }
+
     if (nodes_stack_.empty()) throw std::logic_error("Json invalid");
 
     if (!nodes_stack_.back()->IsDict()) {
         throw std::logic_error("Not a dict");
     }
+
     nodes_stack_.pop_back();
     return *this;
 }
@@ -150,11 +147,13 @@ Builder& Builder::EndArray() {
     if (root_.IsNull()) {
         throw std::logic_error("Not an array");
     }
+
     if (nodes_stack_.empty()) throw std::logic_error("Json invalid");
 
     if (!nodes_stack_.back()->IsArray()) {
         throw std::logic_error("Not an array");
     }
+
     nodes_stack_.pop_back();
     return *this;
 }
@@ -163,9 +162,10 @@ Node& Builder::Build() {
     if (!nodes_stack_.empty()) {
         throw std::logic_error("Json not finished");
     }
+
     if (root_.IsNull()) throw std::logic_error("Json invalid");
 
-     if (key_was_set) throw std::logic_error("Json invalid");
+    if (key_was_set) throw std::logic_error("Json invalid");
 
     return root_;
 }

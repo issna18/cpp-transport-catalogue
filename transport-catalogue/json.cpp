@@ -58,8 +58,8 @@ Node LoadDict(std::istream& input) {
 }
 
 Node LoadString(std::istream& input) {
-    auto it = std::istreambuf_iterator<char>(input);
-    auto end = std::istreambuf_iterator<char>();
+    auto it {std::istreambuf_iterator<char>(input)};
+    auto end {std::istreambuf_iterator<char>()};
     std::string s;
     while (true) {
         if (it == end) {
@@ -106,7 +106,7 @@ Node LoadString(std::istream& input) {
 }
 
 Node LoadBool(std::istream& input) {
-    const auto s = LoadLiteral(input);
+    const auto s {LoadLiteral(input)};
     if (s == "true"sv) {
         return Node{true};
     } else if (s == "false"sv) {
@@ -156,7 +156,7 @@ Node LoadNumber(std::istream& input) {
         read_digits();
     }
 
-    bool is_int = true;
+    bool is_int {true};
     // Парсим дробную часть числа
     if (input.peek() == '.') {
         read_char();
@@ -224,11 +224,11 @@ Node LoadNode(std::istream& input) {
 
 struct PrintContext {
     std::ostream& out;
-    int indent_step = 4;
-    int indent = 0;
+    int indent_step {4};
+    int indent {0};
 
     void PrintIndent() const {
-        for (int i = 0; i < indent; ++i) {
+        for (int i {0}; i < indent; ++i) {
             out.put(' ');
         }
     }
@@ -339,6 +339,116 @@ void PrintNode(const Node& node, const PrintContext& ctx) {
 }
 
 }  // namespace
+
+bool Node::IsInt() const {
+    return std::holds_alternative<int>(*this);
+}
+
+int Node::AsInt() const {
+    using namespace std::literals;
+    if (!IsInt()) {
+        throw std::logic_error("Not an int"s);
+    }
+    return std::get<int>(*this);
+}
+
+bool Node::IsPureDouble() const {
+    return std::holds_alternative<double>(*this);
+}
+
+bool Node::IsDouble() const {
+    return IsInt() || IsPureDouble();
+}
+
+double Node::AsDouble() const {
+    using namespace std::literals;
+    if (!IsDouble()) {
+        throw std::logic_error("Not a double"s);
+    }
+    return IsPureDouble() ? std::get<double>(*this) : AsInt();
+}
+
+bool Node::IsBool() const {
+    return std::holds_alternative<bool>(*this);
+}
+
+bool Node::AsBool() const {
+    using namespace std::literals;
+    if (!IsBool()) {
+        throw std::logic_error("Not a bool"s);
+    }
+
+    return std::get<bool>(*this);
+}
+
+bool Node::IsNull() const {
+    return std::holds_alternative<std::nullptr_t>(*this);
+}
+
+bool Node::IsArray() const {
+    return std::holds_alternative<Array>(*this);
+}
+
+const Array& Node::AsArray() const {
+    using namespace std::literals;
+    if (!IsArray()) {
+        throw std::logic_error("Not an array"s);
+    }
+
+    return std::get<Array>(*this);
+}
+
+Array& Node::AsArray() {
+    using namespace std::literals;
+    if (!IsArray()) {
+        throw std::logic_error("Not an array"s);
+    }
+
+    return std::get<Array>(*this);
+}
+
+bool Node::IsString() const {
+    return std::holds_alternative<std::string>(*this);
+}
+
+const std::string& Node::AsString() const {
+    using namespace std::literals;
+    if (!IsString()) {
+        throw std::logic_error("Not a string"s);
+    }
+
+    return std::get<std::string>(*this);
+}
+
+bool Node::IsDict() const {
+    return std::holds_alternative<Dict>(*this);
+}
+
+const Dict& Node::AsDict() const {
+    using namespace std::literals;
+    if (!IsDict()) {
+        throw std::logic_error("Not a dict"s);
+    }
+
+    return std::get<Dict>(*this);
+}
+
+Dict& Node::AsDict()  {
+    using namespace std::literals;
+    if (!IsDict()) {
+        throw std::logic_error("Not a dict"s);
+    }
+
+    return std::get<Dict>(*this);
+}
+
+bool Node::operator==(const Node& rhs) const {
+    return GetValue() == rhs.GetValue();
+}
+
+const Node::Value& Node::GetValue() const {
+    return *this;
+}
 
 Document Load(std::istream& input) {
     return Document{LoadNode(input)};
