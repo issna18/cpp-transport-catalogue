@@ -85,7 +85,6 @@ private:
 
 } //sphere
 
-
 class MapRenderer {
 public:
     MapRenderer() = default;

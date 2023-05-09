@@ -15,21 +15,21 @@ Reader::Reader(std::istream& in)
 {}
 
 const Node& Reader::GetBaseRequests() const {
-    if (m_json.GetRoot().AsMap().count("base_requests"s)) {
-        return m_json.GetRoot().AsMap().at("base_requests"s);
+    if (m_json.GetRoot().AsDict().count("base_requests"s)) {
+        return m_json.GetRoot().AsDict().at("base_requests"s);
     }
     return empty;
 }
 
 const Node& Reader::GetStatRequests() const {
-    if (m_json.GetRoot().AsMap().count("stat_requests")) {
-        return m_json.GetRoot().AsMap().at("stat_requests");
+    if (m_json.GetRoot().AsDict().count("stat_requests")) {
+        return m_json.GetRoot().AsDict().at("stat_requests");
     }
     return empty;
 }
 
 const Node& Reader::GetRenderSettings() const {
-    return m_json.GetRoot().AsMap().at("render_settings"s);
+    return m_json.GetRoot().AsDict().at("render_settings"s);
 }
 
 const std::pair<std::vector<StopData>, std::vector<BusData>> Reader::GetStopsAndBuses() const {
@@ -38,9 +38,9 @@ const std::pair<std::vector<StopData>, std::vector<BusData>> Reader::GetStopsAnd
     std::vector<BusData> buses;
 
     for (const json::Node& req : requests) {
-        if (req.AsMap().at("type"s).AsString() == "Bus"sv) {
+        if (req.AsDict().at("type"s).AsString() == "Bus"sv) {
             buses.emplace_back(json::BusDataFromJSON(req));
-        } else if (req.AsMap().at("type"s).AsString() == "Stop"sv) {
+        } else if (req.AsDict().at("type"s).AsString() == "Stop"sv) {
             stops.emplace_back(json::StopDataFromJSON(req));
         } else {
             throw std::invalid_argument("Invalid Request Type");
@@ -55,13 +55,13 @@ const std::vector<Request> Reader::GetRequests() const {
     std::vector<Request> queries;
 
     for (const json::Node& req : requests) {
-        const std::string_view type {req.AsMap().at("type"s).AsString()};
-        int id {req.AsMap().at("id"s).AsInt()};
+        const std::string_view type {req.AsDict().at("type"s).AsString()};
+        int id {req.AsDict().at("id"s).AsInt()};
 
         if (type == "Bus"sv) {
-            queries.emplace_back(BusQuery {id, req.AsMap().at("name"s).AsString()});
+            queries.emplace_back(BusQuery {id, req.AsDict().at("name"s).AsString()});
         } else if (type == "Stop"sv) {
-            queries.emplace_back(StopQuery {id, req.AsMap().at("name"s).AsString()});
+            queries.emplace_back(StopQuery {id, req.AsDict().at("name"s).AsString()});
         } else if (type == "Map"sv) {
             queries.emplace_back(MapQuery {id});
         }
@@ -69,43 +69,11 @@ const std::vector<Request> Reader::GetRequests() const {
     return queries;
 }
 
-Node ToJSON(const BusInfo& info) {
-    Dict result {
-        {"request_id"s, Node(info.request_id)}
-    };
-    if (info.status == ResultStatus::NotFound) {
-        result.emplace("error_message"s, Node("not found"s));
-        return Node(std::move(result));
-    }
-    result.emplace("curvature"s, Node(info.route_length/info.geo_length));
-    result.emplace("route_length"s, Node(info.route_length));
-    result.emplace("stop_count"s, Node(static_cast<int>(info.num_stops)));
-    result.emplace("unique_stop_count"s, Node(static_cast<int>(info.num_unique)));
-
-    return Node(std::move(result));
-}
-
-Node ToJSON(const StopInfo& info) {
-    Dict result {
-        {"request_id"s, Node(info.request_id)}
-    };
-    if (info.status == ResultStatus::NotFound) {
-        result.emplace("error_message"s, Node("not found"s));
-        return Node(std::move(result));
-    }
-    Array buses;
-    for (const auto& bus : info.buses) {
-        buses.emplace_back(Node(std::string(bus)));
-    }
-    result.emplace("buses"s, std::move(buses));
-    return Node(std::move(result));
-}
-
 BusData BusDataFromJSON(const Node& node) {
     std::vector<std::string_view> stops;
-    bool is_roundtrip {node.AsMap().at("is_roundtrip"s).AsBool()};
+    bool is_roundtrip {node.AsDict().at("is_roundtrip"s).AsBool()};
 
-    for (const auto& stop_node : node.AsMap().at("stops"s).AsArray()) {
+    for (const auto& stop_node : node.AsDict().at("stops"s).AsArray()) {
         stops.emplace_back(stop_node.AsString());
     }
 
@@ -117,21 +85,21 @@ BusData BusDataFromJSON(const Node& node) {
         stops = std::move(all_stops);
     }
 
-    return {node.AsMap().at("name"s).AsString(), std::move(stops), is_roundtrip};
+    return {node.AsDict().at("name"s).AsString(), std::move(stops), is_roundtrip};
 }
 
 StopData StopDataFromJSON(const Node& node) {
-    auto c_lat {node.AsMap().at("latitude"s).AsDouble()};
-    auto c_long {node.AsMap().at("longitude"s).AsDouble()};
+    auto c_lat {node.AsDict().at("latitude"s).AsDouble()};
+    auto c_long {node.AsDict().at("longitude"s).AsDouble()};
 
     std::unordered_map<std::string_view, int> adjacent;
 
-    const Node& distances {node.AsMap().at("road_distances"s)};
-    for (const auto& entry : distances.AsMap()) {
+    const Node& distances {node.AsDict().at("road_distances"s)};
+    for (const auto& entry : distances.AsDict()) {
         std::pair<std::string_view, int> adj {entry.first, entry.second.AsInt()};
         adjacent.emplace(std::move(adj));
     }
-    return {node.AsMap().at("name"s).AsString(), geo::Coordinates{c_lat, c_long}, std::move(adjacent)};
+    return {node.AsDict().at("name"s).AsString(), geo::Coordinates{c_lat, c_long}, std::move(adjacent)};
 }
 
 RenderSettings GetSettingsFromJSON(const Node& node) {
@@ -158,7 +126,7 @@ RenderSettings GetSettingsFromJSON(const Node& node) {
         return svg::Color{};
     };
 
-    const auto& json {node.AsMap()};
+    const auto& json {node.AsDict()};
     RenderSettings settings;
     settings.width = json.at("width"s).AsDouble();
     settings.height = json.at("height"s).AsDouble();

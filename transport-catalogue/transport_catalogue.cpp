@@ -101,7 +101,6 @@ BusInfo TransportCatalogue::GetBusInfo(int id, std::string_view name) const
     };
 }
 
-
 StopInfo TransportCatalogue::GetStopInfo(int id, std::string_view name) const
 {
     if (m_names_stops.count(name) == 0) {

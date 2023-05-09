@@ -145,7 +145,6 @@ svg::Text MapRenderer::MakeBgBusLabel(std::string_view text, const svg::Point &p
     return label;
 }
 
-
 svg::Text MapRenderer::MakeStopLabel(std::string_view text,
                                      const svg::Point &point,
                                      const svg::Color& color) const

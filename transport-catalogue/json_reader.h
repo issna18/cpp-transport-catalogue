@@ -9,10 +9,6 @@
 
 namespace json {
 
-Node ToJSON(const BusInfo& info);
-Node ToJSON(const StopInfo& info);
-Node ToJSON(int request_id, const MapInfo& info);
-
 StopData StopDataFromJSON(const Node& node);
 BusData BusDataFromJSON(const Node& node);
 RenderSettings GetSettingsFromJSON(const Node& node);

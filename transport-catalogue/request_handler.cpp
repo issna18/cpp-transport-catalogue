@@ -1,3 +1,4 @@
+#include "json_builder.h"
 #include "request_handler.h"
 #include "map_renderer.h"
 
@@ -11,16 +12,64 @@ using namespace std::string_literals;
 struct QueryVisitor {
     const TransportCatalogue& catalogue;
     const MapRenderer& renderer;
-    json::Node operator()(const BusQuery& query) { return json::ToJSON(std::get<BusInfo>(query.Get(catalogue))); }
-    json::Node operator()(const StopQuery& query) { return json::ToJSON(std::get<StopInfo>(query.Get(catalogue))); }
+
+    json::Node ErrorMessage(int request_id) {
+        return json::Builder{}
+            .StartDict()
+                .Key("request_id"s).Value(request_id)
+                .Key("error_message"s).Value("not found"s)
+            .EndDict()
+            .Build();
+    }
+
+    json::Node operator()(const BusQuery& query) {
+        const auto info {std::get<BusInfo>(query.Get(catalogue))};
+        if (info.status == ResultStatus::NotFound) {
+            return ErrorMessage(info.request_id);
+        }
+
+        return json::Builder{}
+            .StartDict()
+                .Key("request_id"s).Value(info.request_id)
+                .Key("curvature"s).Value(info.route_length/info.geo_length)
+                .Key("route_length"s).Value(info.route_length)
+                .Key("stop_count"s).Value(static_cast<int>(info.num_stops))
+                .Key("unique_stop_count"s).Value(static_cast<int>(info.num_unique))
+            .EndDict()
+            .Build();
+    }
+
+    json::Node operator()(const StopQuery& query) {
+        const auto info {std::get<StopInfo>(query.Get(catalogue))};
+        if (info.status == ResultStatus::NotFound) {
+            return ErrorMessage(info.request_id);
+        }
+
+        return json::Builder{}
+            .StartDict()
+                .Key("request_id"s).Value(info.request_id)
+                .Key("buses"s).Value([&info]()
+                            {
+                                json::Array buses;
+                                for (const auto bus : info.buses) {
+                                    buses.emplace_back(std::string(bus));
+                                }
+                                return buses;
+                            }())
+            .EndDict()
+            .Build();
+    }
+
     json::Node operator()(const MapQuery& query) {
         const auto info {std::get<MapInfo>(query.Get(catalogue))};
         std::stringstream ssout;
         renderer.Draw(info.buses, ssout);
-        return json::Dict{
-            {"request_id"s, json::Node(info.request_id)},
-            {"map"s, json::Node(ssout.str())},
-        };
+        return json::Builder{}
+        .StartDict()
+            .Key("request_id"s).Value(info.request_id)
+            .Key("map"s).Value(ssout.str())
+        .EndDict()
+        .Build();
     }
 };
 
@@ -44,7 +93,7 @@ void RequestHandler::ProcessStatRequests(const json::Reader &reader, std::ostrea
     }
 
     if (!results.empty()) {
-        json::PrintNode(json::Node{std::move(results)}, out);
+        json::Print(json::Document{std::move(results)}, out);
         out << std::endl;
     }
 }
