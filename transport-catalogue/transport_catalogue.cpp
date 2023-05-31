@@ -14,30 +14,19 @@ void TransportCatalogue::AddBus(const std::string_view bus_name,
         unique_stops.emplace(stop->name);
     }
 
-    geo::Coordinates prev_coord = v_s.at(0)->coord;
-    double distance {};
-    for (auto it = v_s.begin() + 1; it != v_s.end(); it++) {
-        geo::Coordinates current_coord {(*it)->coord};
-        distance += ComputeDistance(prev_coord, current_coord);
-        prev_coord = current_coord;
-    }
-
-    const Stop* prev_stop = v_s.at(0);
+    std::string_view prev_stop_name {v_s.front()->name};
     int length {0};
-    for (auto it = v_s.begin() + 1; it != v_s.end(); it++) {
-        const Stop* current_stop {*it};
-        PairStops key {prev_stop, current_stop};
-        if (m_stops_distance.count(key) > 0) {
-            length += m_stops_distance.at(key);
-        } else {
-            length += m_stops_distance.at({current_stop, prev_stop});
-        }
-        prev_stop = current_stop;
+    for (auto it = v_s.cbegin() + 1; it != v_s.cend(); it++) {
+        const std::string_view current_stop_name {(*it)->name};
+        length += GetDistance(prev_stop_name, current_stop_name);
+        prev_stop_name = current_stop_name;
     }
 
-    BusPtrConst bus = &m_dqbuses.emplace_back(Bus(std::string(bus_name), v_s,
-                                                  unique_stops.size(), distance,
-                                                  length, is_roudtrip));
+    BusPtrConst bus = &m_dqbuses.emplace_back(Bus(std::string(bus_name),
+                                                  std::move(v_s),
+                                                  unique_stops.size(),
+                                                  length,
+                                                  is_roudtrip));
     m_names_buses.emplace(bus->name, bus);
     for (const auto & stop_name : unique_stops) {
         m_stop_to_buses[stop_name].insert(bus->name);
@@ -69,10 +58,19 @@ void TransportCatalogue::AddStops(const std::vector<StopData>& stops) {
 void TransportCatalogue::SetDistance(std::string_view name,
                                      std::string_view other,
                                      int distance) {
-    StopPtrConst stop = m_names_stops.at(name);
-    StopPtrConst stop_other = m_names_stops.at(other);
-    PairStops key {stop, stop_other};
-    m_stops_distance[key] = distance;
+    m_stops_distance[{name, other}] = distance;
+}
+
+int TransportCatalogue::GetDistance(std::string_view name,
+                                    std::string_view other) const {
+    PairStops key {name, other};
+    if (m_stops_distance.count(key) > 0) {
+        // Точно известно расстояние от предыдущей до текущей остановки
+        return m_stops_distance.at(key);
+    }
+    // Расстояние не задано, считаем равным от текущей до предыдущей
+    return m_stops_distance.at({other, name});
+
 }
 
 BusInfo TransportCatalogue::GetBusInfo(int id, std::string_view name) const
@@ -122,15 +120,23 @@ const std::deque<Bus>& TransportCatalogue::GetBuses() const
     return m_dqbuses;
 }
 
-Info BusQuery::Get(const TransportCatalogue& catalogue) const {
+const std::deque<Stop>& TransportCatalogue::GetStops() const
+{
+    return m_dqstops;
+}
+
+Info BusQuery::Get(const TransportCatalogue& catalogue) const
+{
     return catalogue.GetBusInfo(request_id, name);
 }
 
-Info StopQuery::Get(const TransportCatalogue& catalogue) const {
+Info StopQuery::Get(const TransportCatalogue& catalogue) const
+{
     return catalogue.GetStopInfo(request_id, name);
 }
 
-Info MapQuery::Get(const TransportCatalogue& catalogue) const {
+Info MapQuery::Get(const TransportCatalogue& catalogue) const
+{
     return MapInfo {request_id, catalogue.GetBuses()};
 }
 

@@ -32,6 +32,10 @@ const Node& Reader::GetRenderSettings() const {
     return m_json.GetRoot().AsDict().at("render_settings"s);
 }
 
+const Node& Reader::GetRoutingSettings() const {
+    return m_json.GetRoot().AsDict().at("routing_settings"s);
+}
+
 const std::pair<std::vector<StopData>, std::vector<BusData>> Reader::GetStopsAndBuses() const {
     const auto& requests {GetBaseRequests().AsArray()};
     std::vector<StopData> stops;
@@ -50,9 +54,9 @@ const std::pair<std::vector<StopData>, std::vector<BusData>> Reader::GetStopsAnd
     return std::make_pair(std::move(stops), std::move(buses));
 }
 
-const std::vector<Request> Reader::GetRequests() const {
+const std::vector<Query> Reader::GetQueries() const {
     const auto& requests {GetStatRequests().AsArray()};
-    std::vector<Request> queries;
+    std::vector<Query> queries;
 
     for (const json::Node& req : requests) {
         const std::string_view type {req.AsDict().at("type"s).AsString()};
@@ -64,6 +68,11 @@ const std::vector<Request> Reader::GetRequests() const {
             queries.emplace_back(StopQuery {id, req.AsDict().at("name"s).AsString()});
         } else if (type == "Map"sv) {
             queries.emplace_back(MapQuery {id});
+        } else if (type == "Route"sv) {
+            queries.emplace_back(RouteQuery {id,
+                                 req.AsDict().at("from"s).AsString(),
+                                 req.AsDict().at("to"s).AsString()
+                                 });
         }
     }
     return queries;
@@ -102,7 +111,7 @@ StopData StopDataFromJSON(const Node& node) {
     return {node.AsDict().at("name"s).AsString(), geo::Coordinates{c_lat, c_long}, std::move(adjacent)};
 }
 
-RenderSettings GetSettingsFromJSON(const Node& node) {
+RenderSettings MakeRenderSettingsFromJSON(const Node& node) {
 
     auto ColorFromJSON = [](const Node& n) {
         if (n.IsArray() && n.AsArray().size() == 4) {
@@ -153,5 +162,12 @@ RenderSettings GetSettingsFromJSON(const Node& node) {
     return settings;
 }
 
+RoutingSettings MakeRoutingSettingsFromJSON(const Node& node) {
+    const auto& json {node.AsDict()};
+    return {
+          json.at("bus_wait_time"s).AsInt(),
+          json.at("bus_velocity"s).AsDouble()
+    };
+}
 
 }

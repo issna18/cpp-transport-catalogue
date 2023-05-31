@@ -1,6 +1,7 @@
 #include "json_builder.h"
-#include "request_handler.h"
 #include "map_renderer.h"
+#include "request_handler.h"
+#include "transport_router.h"
 
 #include <string>
 #include <sstream>
@@ -12,6 +13,7 @@ using namespace std::string_literals;
 struct QueryVisitor {
     const TransportCatalogue& catalogue;
     const MapRenderer& renderer;
+    const transport::Router& router;
 
     json::Node ErrorMessage(int request_id) {
         return json::Builder{}
@@ -71,6 +73,15 @@ struct QueryVisitor {
         .EndDict()
         .Build();
     }
+
+    json::Node operator()(const RouteQuery& query) {
+        const auto info {std::get<RouteInfo>(query.Get(router))};
+        if (info.status == ResultStatus::NotFound) {
+            return ErrorMessage(info.request_id);
+        }
+
+        return info.to_json();
+    }
 };
 
 RequestHandler::RequestHandler()
@@ -84,12 +95,15 @@ void RequestHandler::ProcessBaseRequests(const json::Reader& reader) {
 }
 
 void RequestHandler::ProcessStatRequests(const json::Reader &reader, std::ostream& out){
-    MapRenderer renderer(json::GetSettingsFromJSON(reader.GetRenderSettings()));
-    json::Array results;
-    std::vector<Request> requests {reader.GetRequests()};
+    MapRenderer renderer(json::MakeRenderSettingsFromJSON(reader.GetRenderSettings()));
+    transport::Router router(m_transport_catalogue,
+                             json::MakeRoutingSettingsFromJSON(reader.GetRoutingSettings()));
 
-    for (const auto& request : requests) {
-        results.emplace_back(std::visit(QueryVisitor {m_transport_catalogue, renderer}, request));
+    std::vector<Query> queries {reader.GetQueries()};
+
+    json::Array results;
+    for (const auto& query : queries) {
+        results.emplace_back(std::visit(QueryVisitor {m_transport_catalogue, renderer, router}, query));
     }
 
     if (!results.empty()) {

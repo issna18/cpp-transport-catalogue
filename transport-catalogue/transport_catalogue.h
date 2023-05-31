@@ -12,36 +12,6 @@
 
 class TransportCatalogue;
 
-enum class ResultStatus
-{
-    Success,
-    NotFound
-};
-
-struct BusInfo {
-    int request_id;
-    ResultStatus status {ResultStatus::NotFound};
-    const std::string_view name;
-    size_t num_stops {0};
-    size_t num_unique {0};
-    double geo_length {0.0};
-    int route_length {0};
-};
-
-struct StopInfo {
-    int request_id;
-    ResultStatus status {ResultStatus::NotFound};
-    const std::string_view name;
-    const std::set<std::string_view> buses;
-};
-
-struct MapInfo {
-    int request_id;
-    const std::deque<Bus> buses;
-};
-
-using Info = std::variant<BusInfo, StopInfo, MapInfo>;
-
 struct BusQuery {
     int request_id;
     std::string name;
@@ -59,7 +29,6 @@ struct MapQuery {
     Info Get(const TransportCatalogue& catalogue) const;
 };
 
-using Request = std::variant<BusQuery, StopQuery, MapQuery>;
 
 class TransportCatalogue
 {
@@ -75,10 +44,14 @@ public:
     void SetDistance(std::string_view name,
                      std::string_view other, int distance);
 
+    int GetDistance(std::string_view name,
+                    std::string_view other) const;
+
     BusInfo GetBusInfo(int id, std::string_view name) const;
     StopInfo GetStopInfo(int id, std::string_view name) const;
 
     const std::deque<Bus>& GetBuses() const;
+    const std::deque<Stop>& GetStops() const;
 
 private:
     std::deque<Stop> m_dqstops;
