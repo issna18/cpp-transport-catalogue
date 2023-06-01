@@ -29,16 +29,7 @@ struct QueryVisitor {
         if (info.status == ResultStatus::NotFound) {
             return ErrorMessage(info.request_id);
         }
-
-        return json::Builder{}
-            .StartDict()
-                .Key("request_id"s).Value(info.request_id)
-                .Key("curvature"s).Value(info.route_length/info.geo_length)
-                .Key("route_length"s).Value(info.route_length)
-                .Key("stop_count"s).Value(static_cast<int>(info.num_stops))
-                .Key("unique_stop_count"s).Value(static_cast<int>(info.num_unique))
-            .EndDict()
-            .Build();
+        return info.to_json();
     }
 
     json::Node operator()(const StopQuery& query) {
@@ -46,32 +37,12 @@ struct QueryVisitor {
         if (info.status == ResultStatus::NotFound) {
             return ErrorMessage(info.request_id);
         }
-
-        return json::Builder{}
-            .StartDict()
-                .Key("request_id"s).Value(info.request_id)
-                .Key("buses"s).Value([&info]()
-                            {
-                                json::Array buses;
-                                for (const auto bus : info.buses) {
-                                    buses.emplace_back(std::string(bus));
-                                }
-                                return buses;
-                            }())
-            .EndDict()
-            .Build();
+        return info.to_json();
     }
 
     json::Node operator()(const MapQuery& query) {
-        const auto info {std::get<MapInfo>(query.Get(catalogue))};
-        std::stringstream ssout;
-        renderer.Draw(info.buses, ssout);
-        return json::Builder{}
-        .StartDict()
-            .Key("request_id"s).Value(info.request_id)
-            .Key("map"s).Value(ssout.str())
-        .EndDict()
-        .Build();
+        const auto info {std::get<MapInfo>(query.Get(renderer))};
+        return info.to_json();
     }
 
     json::Node operator()(const RouteQuery& query) {
@@ -79,7 +50,6 @@ struct QueryVisitor {
         if (info.status == ResultStatus::NotFound) {
             return ErrorMessage(info.request_id);
         }
-
         return info.to_json();
     }
 };
@@ -95,7 +65,8 @@ void RequestHandler::ProcessBaseRequests(const json::Reader& reader) {
 }
 
 void RequestHandler::ProcessStatRequests(const json::Reader &reader, std::ostream& out){
-    MapRenderer renderer(json::MakeRenderSettingsFromJSON(reader.GetRenderSettings()));
+    MapRenderer renderer(m_transport_catalogue,
+                         json::MakeRenderSettingsFromJSON(reader.GetRenderSettings()));
     transport::Router router(m_transport_catalogue,
                              json::MakeRoutingSettingsFromJSON(reader.GetRoutingSettings()));
 

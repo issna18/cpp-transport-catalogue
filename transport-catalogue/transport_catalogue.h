@@ -10,26 +10,6 @@
 #include <vector>
 #include <unordered_map>
 
-class TransportCatalogue;
-
-struct BusQuery {
-    int request_id;
-    std::string name;
-    Info Get(const TransportCatalogue& catalogue) const;
-};
-
-struct StopQuery {
-    int request_id;
-    std::string name;
-    Info Get(const TransportCatalogue& catalogue) const;
-};
-
-struct MapQuery {
-    int request_id;
-    Info Get(const TransportCatalogue& catalogue) const;
-};
-
-
 class TransportCatalogue
 {
 public:
@@ -62,3 +42,14 @@ private:
     std::unordered_map<PairStops, int, PairStopsHasher> m_stops_distance;
 };
 
+struct BusQuery {
+    int request_id;
+    std::string name;
+    Info Get(const TransportCatalogue& catalogue) const;
+};
+
+struct StopQuery {
+    int request_id;
+    std::string name;
+    Info Get(const TransportCatalogue& catalogue) const;
+};

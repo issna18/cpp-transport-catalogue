@@ -3,6 +3,7 @@
 #include "domain.h"
 #include "geo.h"
 #include "svg.h"
+#include "transport_catalogue.h"
 
 #include <algorithm>
 #include <cstdlib>
@@ -87,10 +88,13 @@ private:
 
 class MapRenderer {
 public:
-    MapRenderer() = default;
-    MapRenderer(const RenderSettings& settings) : m_settings {settings} {};
+    MapRenderer(const TransportCatalogue& catalogue, const RenderSettings& settings)
+        : m_settings {settings},
+          m_transport_catalogue {catalogue}
+    {}
+
     void SetSettings(const RenderSettings& settings);
-    void Draw(const std::deque<Bus>& buses, std::ostream& out = std::cout) const;
+    void Draw(std::ostream& out = std::cout) const;
 
 private:
     svg::Polyline MakeRoute(const std::vector<StopPtrConst>& stops,
@@ -101,4 +105,10 @@ private:
     svg::Text MakeStopLabel(std::string_view text, const svg::Point &point, const svg::Color& color) const;
     svg::Text MakeBgStopLabel(std::string_view text, const svg::Point &point) const;
     RenderSettings m_settings;
+    const TransportCatalogue& m_transport_catalogue;
+};
+
+struct MapQuery {
+    int request_id;
+    Info Get(const MapRenderer& renderer) const;
 };

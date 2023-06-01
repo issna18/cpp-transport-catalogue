@@ -2,6 +2,8 @@
 
 #include "domain.h"
 #include "json.h"
+#include "map_renderer.h"
+#include "transport_catalogue.h"
 #include "transport_router.h"
 
 #include <istream>
@@ -11,8 +13,7 @@ using Query = std::variant<BusQuery, StopQuery, MapQuery, RouteQuery>;
 
 namespace json {
 
-StopData StopDataFromJSON(const Node& node);
-BusData BusDataFromJSON(const Node& node);
+//TODO: move into domain.h conrresponding constructors
 RenderSettings MakeRenderSettingsFromJSON(const Node& node);
 RoutingSettings MakeRoutingSettingsFromJSON(const Node& node);
 

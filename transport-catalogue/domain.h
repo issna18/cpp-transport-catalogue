@@ -14,6 +14,21 @@ struct StopData
     std::string_view name;
     geo::Coordinates coordinates;
     std::unordered_map<std::string_view, int> adjacent;
+    StopData(const json::Node& node)
+        : name {node.AsDict().at("name").AsString()}
+    {
+        using namespace std::string_literals;
+        auto c_lat {node.AsDict().at("latitude"s).AsDouble()};
+        auto c_long {node.AsDict().at("longitude"s).AsDouble()};
+
+        const json::Node& distances {node.AsDict().at("road_distances"s)};
+        for (const auto& entry : distances.AsDict()) {
+            std::pair<std::string_view, int> adj {entry.first, entry.second.AsInt()};
+            adjacent.emplace(std::move(adj));
+        }
+
+        coordinates = geo::Coordinates{c_lat, c_long};
+    }
 };
 
 struct BusData
@@ -21,6 +36,22 @@ struct BusData
     std::string_view name;
     std::vector<std::string_view> stops;
     bool is_roundtrip {false};
+    BusData(const json::Node& node)
+        : name {node.AsDict().at("name").AsString()},
+          is_roundtrip {node.AsDict().at("is_roundtrip").AsBool()}
+    {
+        for (const auto& stop_node : node.AsDict().at("stops").AsArray()) {
+            stops.emplace_back(stop_node.AsString());
+        }
+
+        if (!is_roundtrip) {
+            std::vector<std::string_view> all_stops;
+            all_stops.reserve(stops.size() * 2 - 1);
+            all_stops.insert(all_stops.begin(), stops.begin(), stops.end());
+            std::move(stops.rbegin() + 1, stops.rend(), std::back_inserter(all_stops));
+            stops = std::move(all_stops);
+        }
+    }
 };
 
 class Stop
@@ -101,6 +132,18 @@ struct BusInfo {
     size_t num_unique {0};
     double geo_length {0.0};
     int route_length {0};
+    json::Node to_json() const {
+        using namespace std::string_literals;
+        return json::Builder{}
+            .StartDict()
+                .Key("request_id"s).Value(request_id)
+                .Key("curvature"s).Value(route_length / geo_length)
+                .Key("route_length"s).Value(route_length)
+                .Key("stop_count"s).Value(static_cast<int>(num_stops))
+                .Key("unique_stop_count"s).Value(static_cast<int>(num_unique))
+            .EndDict()
+            .Build();
+    }
 };
 
 struct StopInfo {
@@ -108,11 +151,36 @@ struct StopInfo {
     ResultStatus status {ResultStatus::NotFound};
     const std::string_view name;
     const std::set<std::string_view> buses;
+    json::Node to_json() const {
+        using namespace std::string_literals;
+        return json::Builder{}
+            .StartDict()
+                .Key("request_id"s).Value(request_id)
+                .Key("buses"s).Value([this]()
+                            {
+                                json::Array value;
+                                for (const auto bus : buses) {
+                                    value.emplace_back(std::string(bus));
+                                }
+                                return value;
+                            }())
+            .EndDict()
+            .Build();
+    }
 };
 
 struct MapInfo {
     int request_id;
-    const std::deque<Bus> buses;
+    std::string map;
+    json::Node to_json() const {
+        using namespace std::string_literals;
+        return json::Builder{}
+        .StartDict()
+            .Key("request_id"s).Value(request_id)
+            .Key("map"s).Value(map)
+        .EndDict()
+        .Build();
+    }
 };
 
 struct RouteItem {
@@ -147,13 +215,13 @@ struct RouteInfo {
                 .Key("request_id"s).Value(request_id)
                 .Key("total_time"s).Value(total_time)
                 .Key("items"s).Value([this]()
-                                {
-                                    json::Array value;
-                                    for (const auto& item : items) {
-                                        value.emplace_back(item.to_json());
-                                    }
-                                    return value;
-                                }())
+                    {
+                        json::Array value;
+                        for (const auto& item : items) {
+                            value.emplace_back(item.to_json());
+                        }
+                        return value;
+                    }())
                 .EndDict()
                 .Build();
     }

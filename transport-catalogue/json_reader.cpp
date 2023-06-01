@@ -43,9 +43,9 @@ const std::pair<std::vector<StopData>, std::vector<BusData>> Reader::GetStopsAnd
 
     for (const json::Node& req : requests) {
         if (req.AsDict().at("type"s).AsString() == "Bus"sv) {
-            buses.emplace_back(json::BusDataFromJSON(req));
+            buses.emplace_back(BusData(req));
         } else if (req.AsDict().at("type"s).AsString() == "Stop"sv) {
-            stops.emplace_back(json::StopDataFromJSON(req));
+            stops.emplace_back(StopData(req));
         } else {
             throw std::invalid_argument("Invalid Request Type");
         }
@@ -76,39 +76,6 @@ const std::vector<Query> Reader::GetQueries() const {
         }
     }
     return queries;
-}
-
-BusData BusDataFromJSON(const Node& node) {
-    std::vector<std::string_view> stops;
-    bool is_roundtrip {node.AsDict().at("is_roundtrip"s).AsBool()};
-
-    for (const auto& stop_node : node.AsDict().at("stops"s).AsArray()) {
-        stops.emplace_back(stop_node.AsString());
-    }
-
-    if (!is_roundtrip) {
-        std::vector<std::string_view> all_stops;
-        all_stops.reserve(stops.size() * 2 - 1);
-        all_stops.insert(all_stops.begin(), stops.begin(), stops.end());
-        std::move(stops.rbegin() + 1, stops.rend(), std::back_inserter(all_stops));
-        stops = std::move(all_stops);
-    }
-
-    return {node.AsDict().at("name"s).AsString(), std::move(stops), is_roundtrip};
-}
-
-StopData StopDataFromJSON(const Node& node) {
-    auto c_lat {node.AsDict().at("latitude"s).AsDouble()};
-    auto c_long {node.AsDict().at("longitude"s).AsDouble()};
-
-    std::unordered_map<std::string_view, int> adjacent;
-
-    const Node& distances {node.AsDict().at("road_distances"s)};
-    for (const auto& entry : distances.AsDict()) {
-        std::pair<std::string_view, int> adj {entry.first, entry.second.AsInt()};
-        adjacent.emplace(std::move(adj));
-    }
-    return {node.AsDict().at("name"s).AsString(), geo::Coordinates{c_lat, c_long}, std::move(adjacent)};
 }
 
 RenderSettings MakeRenderSettingsFromJSON(const Node& node) {

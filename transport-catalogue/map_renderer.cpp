@@ -1,6 +1,8 @@
 #include "map_renderer.h"
 
 #include <set>
+#include <string>
+#include <sstream>
 #include <map>
 
 using namespace std::string_literals;
@@ -13,12 +15,20 @@ bool IsZero(double value) {
 
 } //namespace sphere
 
+Info MapQuery::Get(const MapRenderer& renderer) const
+{
+    std::stringstream ssout;
+    renderer.Draw(ssout);
+    return MapInfo {request_id, ssout.str()};
+}
+
 void MapRenderer::SetSettings(const RenderSettings& settings) {
     m_settings = settings;
 }
 
-void MapRenderer::Draw(const std::deque<Bus>& buses, std::ostream& out) const
+void MapRenderer::Draw(std::ostream& out) const
 {
+    const std::deque<Bus>& buses = m_transport_catalogue.GetBuses();
     svg::Document svg;
     std::vector<geo::Coordinates> all_coordinates;
     std::map<const std::string_view, BusPtrConst> buses_stops;

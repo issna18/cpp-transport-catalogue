@@ -135,8 +135,3 @@ Info StopQuery::Get(const TransportCatalogue& catalogue) const
     return catalogue.GetStopInfo(request_id, name);
 }
 
-Info MapQuery::Get(const TransportCatalogue& catalogue) const
-{
-    return MapInfo {request_id, catalogue.GetBuses()};
-}
-
