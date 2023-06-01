@@ -27,8 +27,8 @@ public:
     int GetDistance(std::string_view name,
                     std::string_view other) const;
 
-    BusInfo GetBusInfo(int id, std::string_view name) const;
-    StopInfo GetStopInfo(int id, std::string_view name) const;
+    Info GetBusInfo(int id, std::string_view name) const;
+    Info GetStopInfo(int id, std::string_view name) const;
 
     const std::deque<Bus>& GetBuses() const;
     const std::deque<Stop>& GetStops() const;

@@ -73,7 +73,7 @@ int TransportCatalogue::GetDistance(std::string_view name,
 
 }
 
-BusInfo TransportCatalogue::GetBusInfo(int id, std::string_view name) const
+Info TransportCatalogue::GetBusInfo(int id, std::string_view name) const
 {
     if (m_names_buses.count(name) == 0) {
         return BusInfo {
@@ -99,7 +99,7 @@ BusInfo TransportCatalogue::GetBusInfo(int id, std::string_view name) const
     };
 }
 
-StopInfo TransportCatalogue::GetStopInfo(int id, std::string_view name) const
+Info TransportCatalogue::GetStopInfo(int id, std::string_view name) const
 {
     if (m_names_stops.count(name) == 0) {
         return StopInfo {id, ResultStatus::NotFound, name, {}};

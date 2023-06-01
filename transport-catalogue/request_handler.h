@@ -5,7 +5,6 @@
 
 #include <ostream>
 
-
 class RequestHandler
 {
 public:

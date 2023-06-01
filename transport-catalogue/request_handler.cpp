@@ -29,7 +29,7 @@ struct QueryVisitor {
         if (info.status == ResultStatus::NotFound) {
             return ErrorMessage(info.request_id);
         }
-        return info.to_json();
+        return info.ToJSON();
     }
 
     json::Node operator()(const StopQuery& query) {
@@ -37,12 +37,12 @@ struct QueryVisitor {
         if (info.status == ResultStatus::NotFound) {
             return ErrorMessage(info.request_id);
         }
-        return info.to_json();
+        return info.ToJSON();
     }
 
     json::Node operator()(const MapQuery& query) {
         const auto info {std::get<MapInfo>(query.Get(renderer))};
-        return info.to_json();
+        return info.ToJSON();
     }
 
     json::Node operator()(const RouteQuery& query) {
@@ -50,7 +50,7 @@ struct QueryVisitor {
         if (info.status == ResultStatus::NotFound) {
             return ErrorMessage(info.request_id);
         }
-        return info.to_json();
+        return info.ToJSON();
     }
 };
 
