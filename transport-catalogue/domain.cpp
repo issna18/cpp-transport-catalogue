@@ -1,9 +1,11 @@
 #include "domain.h"
+#include "json_builder.h"
+
+using namespace std::string_literals;
 
 StopData::StopData(const json::Node& node)
     : name {node.AsDict().at("name").AsString()}
 {
-    using namespace std::string_literals;
     auto c_lat {node.AsDict().at("latitude"s).AsDouble()};
     auto c_long {node.AsDict().at("longitude"s).AsDouble()};
 
@@ -17,10 +19,10 @@ StopData::StopData(const json::Node& node)
 }
 
 BusData::BusData(const json::Node& node)
-    : name {node.AsDict().at("name").AsString()},
-      is_roundtrip {node.AsDict().at("is_roundtrip").AsBool()}
+    : name {node.AsDict().at("name"s).AsString()},
+      is_roundtrip {node.AsDict().at("is_roundtrip"s).AsBool()}
 {
-    for (const auto& stop_node : node.AsDict().at("stops").AsArray()) {
+    for (const auto& stop_node : node.AsDict().at("stops"s).AsArray()) {
         stops.emplace_back(stop_node.AsString());
     }
 
@@ -33,10 +35,16 @@ BusData::BusData(const json::Node& node)
     }
 }
 
-Stop::Stop(std::string&& n, const geo::Coordinates& c)
+Stop::Stop(std::string&& n, geo::Coordinates&& c)
     : name {std::move(n)},
+      coord {std::move(c)}
+{}
+
+Stop::Stop(const std::string& n,const geo::Coordinates& c)
+    : name {n},
       coord {c}
 {}
+
 
 bool Stop::operator==(const Stop& other) const {
     return name == other.name;
@@ -49,9 +57,9 @@ Bus::Bus(std::string&& n,
          bool is_round)
     : name {std::move(n)},
       stops {std::move(s)},
+      is_roundtrip {is_round},
       num_unique {num_u},
-      route_length {length},
-      is_roundtrip {is_round}
+      route_length {length}
 {
     geo::Coordinates prev_coord = stops.at(0)->coord;
     for (auto it = stops.cbegin() + 1; it != stops.cend(); it++) {

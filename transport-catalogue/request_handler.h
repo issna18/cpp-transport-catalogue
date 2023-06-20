@@ -8,10 +8,12 @@
 class RequestHandler
 {
 public:
-    RequestHandler();
-    void ProcessBaseRequests(const json::Reader& reader);
-    void ProcessStatRequests(const json::Reader& reader, std::ostream& out = std::cout);
-
+    RequestHandler(std::istream& in);
+    void ProcessBaseRequests();
+    void ProcessStatRequests(std::ostream& out = std::cout);
+    void Serialize();
+    void Deserialize();
 private:
     TransportCatalogue m_transport_catalogue;
+    const json::Reader m_reader;
 };

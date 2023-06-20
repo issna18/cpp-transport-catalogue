@@ -1,8 +1,9 @@
 #pragma once
 
+
+#include "json.h"
 #include "geo.h"
 #include "svg.h"
-#include "json_builder.h"
 
 #include <set>
 #include <string>
@@ -11,24 +12,25 @@
 
 struct StopData
 {
+    StopData(const json::Node& node);
     std::string_view name;
     geo::Coordinates coordinates;
     std::unordered_map<std::string_view, int> adjacent;
-    StopData(const json::Node& node);
 };
 
 struct BusData
 {
+    BusData(const json::Node& node);
     std::string_view name;
     std::vector<std::string_view> stops;
     bool is_roundtrip {false};
-    BusData(const json::Node& node);
 };
 
 class Stop
 {
 public:
-    Stop(std::string&& n, const geo::Coordinates& c);
+    Stop(std::string&& n, geo::Coordinates&& c);
+    Stop(const std::string& n, const geo::Coordinates& c);
 
     std::string name;
     geo::Coordinates coord;
@@ -53,10 +55,10 @@ public:
 
     std::string name;
     std::vector<StopPtrConst> stops;
+    bool is_roundtrip {false};
     size_t num_unique;
     double geo_length {0.0};
     int route_length;
-    bool is_roundtrip {false};
 
     bool operator==(const Bus& other) const;
 };
@@ -87,6 +89,15 @@ struct RoutingSettings
 {
     int bus_wait_time {1};
     double bus_velocity {1.0};
+};
+
+struct SerializationSettings
+{
+    std::string file_name;
+
+    SerializationSettings(const json::Node& node)
+        : file_name {node.AsDict().at("file").AsString()}
+    {}
 };
 
 enum class ResultStatus

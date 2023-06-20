@@ -14,30 +14,15 @@ Reader::Reader(std::istream& in)
     : m_json {Load(in)}
 {}
 
-const Node& Reader::GetBaseRequests() const {
-    if (m_json.GetRoot().AsDict().count("base_requests"s)) {
-        return m_json.GetRoot().AsDict().at("base_requests"s);
+const Node& Reader::GetMainRequest(const std::string& key) const {
+    if (m_json.GetRoot().AsDict().count(key)) {
+        return m_json.GetRoot().AsDict().at(key);
     }
     return empty;
-}
-
-const Node& Reader::GetStatRequests() const {
-    if (m_json.GetRoot().AsDict().count("stat_requests")) {
-        return m_json.GetRoot().AsDict().at("stat_requests");
-    }
-    return empty;
-}
-
-const Node& Reader::GetRenderSettings() const {
-    return m_json.GetRoot().AsDict().at("render_settings"s);
-}
-
-const Node& Reader::GetRoutingSettings() const {
-    return m_json.GetRoot().AsDict().at("routing_settings"s);
 }
 
 const std::pair<std::vector<StopData>, std::vector<BusData>> Reader::GetStopsAndBuses() const {
-    const auto& requests {GetBaseRequests().AsArray()};
+    const auto& requests {GetMainRequest("base_requests"s).AsArray()};
     std::vector<StopData> stops;
     std::vector<BusData> buses;
 
@@ -55,7 +40,7 @@ const std::pair<std::vector<StopData>, std::vector<BusData>> Reader::GetStopsAnd
 }
 
 const std::vector<Query> Reader::GetQueries() const {
-    const auto& requests {GetStatRequests().AsArray()};
+    const auto& requests {GetMainRequest("stat_requests"s).AsArray()};
     std::vector<Query> queries;
 
     for (const json::Node& req : requests) {
@@ -102,8 +87,9 @@ RenderSettings MakeRenderSettingsFromJSON(const Node& node) {
         return svg::Color{};
     };
 
-    const auto& json {node.AsDict()};
     RenderSettings settings;
+    if (!node.IsDict()) return settings;
+    const auto& json {node.AsDict()};
     settings.width = json.at("width"s).AsDouble();
     settings.height = json.at("height"s).AsDouble();
     settings.padding = json.at("padding"s).AsDouble();
@@ -130,6 +116,7 @@ RenderSettings MakeRenderSettingsFromJSON(const Node& node) {
 }
 
 RoutingSettings MakeRoutingSettingsFromJSON(const Node& node) {
+    if (!node.IsDict()) return {};
     const auto& json {node.AsDict()};
     return {
           json.at("bus_wait_time"s).AsInt(),

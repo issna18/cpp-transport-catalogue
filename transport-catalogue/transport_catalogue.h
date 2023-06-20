@@ -16,9 +16,12 @@ public:
     void AddBus(const std::string_view bus_name,
                 const std::vector<std::string_view>& bus_stops,
                 bool is_roundtrip = false);
+    BusPtrConst EmplaceBus(Bus&& bus);
     void AddBuses(const std::vector<BusData>& buses);
 
     void AddStop(std::string_view name, const geo::Coordinates& c);
+    StopPtrConst EmplaceStop(Stop&& stop);
+
     void AddStops(const std::vector<StopData>& stops);
 
     void SetDistance(std::string_view name,
@@ -32,6 +35,9 @@ public:
 
     const std::deque<Bus>& GetBuses() const;
     const std::deque<Stop>& GetStops() const;
+
+    bool Serialize(std::ostream& output) const;
+    bool Deserialize(std::istream &input);
 
 private:
     std::deque<Stop> m_dqstops;
