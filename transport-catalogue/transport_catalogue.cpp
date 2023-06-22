@@ -1,7 +1,5 @@
 #include "transport_catalogue.h"
 
-#include <transport_catalogue.pb.h>
-
 #include <unordered_set>
 
 void TransportCatalogue::AddBus(const std::string_view bus_name,
@@ -137,9 +135,8 @@ const std::deque<Stop>& TransportCatalogue::GetStops() const
     return m_dqstops;
 }
 
-bool TransportCatalogue::Serialize(std::ostream& output) const
+bool TransportCatalogue::Serialize(proto::TransportCatalogue& proto_catalogue) const
 {
-    proto::TransportCatalogue proto_catalogue;
     std::unordered_map<std::string_view, size_t> stops_to_id;
     std::unordered_map<std::string_view, size_t> buses_to_id;
 
@@ -183,20 +180,15 @@ bool TransportCatalogue::Serialize(std::ostream& output) const
         }
     }
 
-    return proto_catalogue.SerializeToOstream(&output);
+    return true;
 }
 
-bool TransportCatalogue::Deserialize(std::istream& input)
+bool TransportCatalogue::Deserialize(const proto::TransportCatalogue& proto_catalogue)
 {
-    proto::TransportCatalogue proto_catalogue;
-    if (!proto_catalogue.ParseFromIstream(&input)) return false;
-
-    const auto& proto_stops {proto_catalogue.stops()};
-    const auto& proto_buses {proto_catalogue.buses()};
     std::unordered_map<size_t, StopPtrConst> id_to_stop;
     std::unordered_map<size_t, BusPtrConst> id_to_bus;
 
-    for (const auto& proto_stop : proto_stops) {
+    for (const auto& proto_stop : proto_catalogue.stops()) {
         StopPtrConst stop_ptr {
             EmplaceStop({proto_stop.name(),
                         {proto_stop.lat(), proto_stop.lng()}
@@ -212,7 +204,7 @@ bool TransportCatalogue::Deserialize(std::istream& input)
                     );
     }
 
-    for (const auto& proto_bus : proto_buses) {
+    for (const auto& proto_bus : proto_catalogue.buses()) {
         std::vector<StopPtrConst> stops_ptrs;
         stops_ptrs.reserve(proto_bus.stops_size());
 

@@ -79,6 +79,60 @@ size_t PairStopsHasher::operator() (const PairStops stops) const {
     return h_first + h_second * 37;
 }
 
+RenderSettings::RenderSettings(const json::Node& node)
+{
+
+    FromJSON(node);
+}
+
+bool RenderSettings::FromJSON(const json::Node& node) {
+    if (!node.IsDict()) return false;
+    auto ColorFromJSON = [](const json::Node& n) {
+        if (n.IsArray() && n.AsArray().size() == 4) {
+            const auto& array {n.AsArray()};
+            return svg::Color(svg::Rgba(static_cast<uint8_t>(array[0].AsInt()),
+                                        static_cast<uint8_t>(array[1].AsInt()),
+                                        static_cast<uint8_t>(array[2].AsInt()),
+                                        array[3].AsDouble()
+                                        )
+            );
+        } else if (n.IsArray() && n.AsArray().size() == 3) {
+            const auto& array {n.AsArray()};
+            return svg::Color(svg::Rgb(static_cast<uint8_t>(array[0].AsInt()),
+                                       static_cast<uint8_t>(array[1].AsInt()),
+                                       static_cast<uint8_t>(array[2].AsInt())
+                                       )
+            );
+        } else if (n.IsString()){
+            return svg::Color(n.AsString());
+        }
+        return svg::Color{};
+    };
+    const auto& json {node.AsDict()};
+    width = json.at("width"s).AsDouble();
+    height = json.at("height"s).AsDouble();
+    padding = json.at("padding"s).AsDouble();
+    line_width = json.at("line_width"s).AsDouble();
+    stop_radius = json.at("stop_radius"s).AsDouble();
+
+    bus_label_font_size = json.at("bus_label_font_size"s).AsInt();
+    const auto& bl_offset {json.at("bus_label_offset"s).AsArray()};
+    bus_label_offset = {bl_offset[0].AsDouble(), bl_offset[1].AsDouble()};
+
+    stop_label_font_size = json.at("stop_label_font_size"s).AsInt();
+    const auto& sl_offset {json.at("stop_label_offset"s).AsArray()};
+    stop_label_offset = {sl_offset[0].AsDouble(), sl_offset[1].AsDouble()};
+
+    underlayer_color = ColorFromJSON(json.at("underlayer_color"s));
+    underlayer_width = json.at("underlayer_width"s).AsDouble();
+
+    const auto& palette {json.at("color_palette"s).AsArray()};
+    for (const json::Node& j_color : palette) {
+        color_palette.emplace_back(ColorFromJSON(j_color));
+    }
+    return true;
+}
+
 json::Node BusInfo::ToJSON() const {
     using namespace std::string_literals;
     return json::Builder{}

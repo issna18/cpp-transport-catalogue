@@ -21,7 +21,7 @@ const Node& Reader::GetMainRequest(const std::string& key) const {
     return empty;
 }
 
-const std::pair<std::vector<StopData>, std::vector<BusData>> Reader::GetStopsAndBuses() const {
+std::pair<std::vector<StopData>, std::vector<BusData>> Reader::GetStopsAndBuses() const {
     const auto& requests {GetMainRequest("base_requests"s).AsArray()};
     std::vector<StopData> stops;
     std::vector<BusData> buses;
@@ -39,7 +39,7 @@ const std::pair<std::vector<StopData>, std::vector<BusData>> Reader::GetStopsAnd
     return std::make_pair(std::move(stops), std::move(buses));
 }
 
-const std::vector<Query> Reader::GetQueries() const {
+std::vector<Query> Reader::GetQueries() const {
     const auto& requests {GetMainRequest("stat_requests"s).AsArray()};
     std::vector<Query> queries;
 
@@ -63,56 +63,12 @@ const std::vector<Query> Reader::GetQueries() const {
     return queries;
 }
 
-RenderSettings MakeRenderSettingsFromJSON(const Node& node) {
+RenderSettings Reader::GetRenderSettings() const {
+    return RenderSettings(GetMainRequest("render_settings"s));
+}
 
-    auto ColorFromJSON = [](const Node& n) {
-        if (n.IsArray() && n.AsArray().size() == 4) {
-            const auto& array {n.AsArray()};
-            return svg::Color(svg::Rgba(static_cast<uint8_t>(array[0].AsInt()),
-                                        static_cast<uint8_t>(array[1].AsInt()),
-                                        static_cast<uint8_t>(array[2].AsInt()),
-                                        array[3].AsDouble()
-                                        )
-            );
-        } else if (n.IsArray() && n.AsArray().size() == 3) {
-            const auto& array {n.AsArray()};
-            return svg::Color(svg::Rgb(static_cast<uint8_t>(array[0].AsInt()),
-                                       static_cast<uint8_t>(array[1].AsInt()),
-                                       static_cast<uint8_t>(array[2].AsInt())
-                                       )
-            );
-        } else if (n.IsString()){
-            return svg::Color(n.AsString());
-        }
-        return svg::Color{};
-    };
-
-    RenderSettings settings;
-    if (!node.IsDict()) return settings;
-    const auto& json {node.AsDict()};
-    settings.width = json.at("width"s).AsDouble();
-    settings.height = json.at("height"s).AsDouble();
-    settings.padding = json.at("padding"s).AsDouble();
-    settings.line_width = json.at("line_width"s).AsDouble();
-    settings.stop_radius = json.at("stop_radius"s).AsDouble();
-
-    settings.bus_label_font_size = json.at("bus_label_font_size"s).AsInt();
-    const auto& bl_offset {json.at("bus_label_offset"s).AsArray()};
-    settings.bus_label_offset = {bl_offset[0].AsDouble(), bl_offset[1].AsDouble()};
-
-    settings.stop_label_font_size = json.at("stop_label_font_size"s).AsInt();
-    const auto& sl_offset {json.at("stop_label_offset"s).AsArray()};
-    settings.stop_label_offset = {sl_offset[0].AsDouble(), sl_offset[1].AsDouble()};
-
-    settings.underlayer_color = ColorFromJSON(json.at("underlayer_color"s));
-    settings.underlayer_width = json.at("underlayer_width"s).AsDouble();
-
-    const auto& palette {json.at("color_palette"s).AsArray()};
-    for (const Node& j_color : palette) {
-        settings.color_palette.emplace_back(ColorFromJSON(j_color));
-    }
-
-    return settings;
+SerializationSettings Reader::GetSerializationSettings() const {
+    return SerializationSettings(GetMainRequest("serialization_settings"s));
 }
 
 RoutingSettings MakeRoutingSettingsFromJSON(const Node& node) {

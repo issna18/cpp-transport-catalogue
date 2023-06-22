@@ -14,7 +14,6 @@ using Query = std::variant<BusQuery, StopQuery, MapQuery, RouteQuery>;
 
 namespace json {
 
-RenderSettings MakeRenderSettingsFromJSON(const Node& node);
 RoutingSettings MakeRoutingSettingsFromJSON(const Node& node);
 
 class Reader
@@ -22,8 +21,10 @@ class Reader
 public:
     Reader(std::istream& in);
     const Node& GetMainRequest(const std::string& key) const;
-    const std::pair<std::vector<StopData>, std::vector<BusData>> GetStopsAndBuses() const;
-    const std::vector<Query> GetQueries() const;
+    std::pair<std::vector<StopData>, std::vector<BusData>> GetStopsAndBuses() const;
+    std::vector<Query> GetQueries() const;
+    RenderSettings GetRenderSettings() const;
+    SerializationSettings GetSerializationSettings() const;
 
 private:
     json::Document m_json;

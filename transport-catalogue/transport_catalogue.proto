@@ -1,5 +1,9 @@
 syntax = "proto3";
 
+option cc_generic_services = false;
+
+import "map_renderer.proto";
+
 package proto;
 
 message Stop {
@@ -35,4 +39,9 @@ message TransportCatalogue {
     repeated Bus buses = 2;
     repeated Distance distances = 3;
     repeated StopToBuses stop_to_buses = 4;
+}
+
+message TransportDatabase {
+    TransportCatalogue catalogue = 1;
+    proto.MapRenderer renderer = 2;
 }

@@ -88,6 +88,10 @@ private:
 
 class MapRenderer {
 public:
+    MapRenderer(const TransportCatalogue& catalogue)
+       : m_transport_catalogue {catalogue}
+    {}
+
     MapRenderer(const TransportCatalogue& catalogue, const RenderSettings& settings)
         : m_settings {settings},
           m_transport_catalogue {catalogue}
@@ -95,8 +99,11 @@ public:
 
     void SetSettings(const RenderSettings& settings);
     void Draw(std::ostream& out = std::cout) const;
+    bool Serialize(proto::MapRenderer& proto_renderer) const;
+    bool Deserialize(const proto::MapRenderer &proto_renderer);
 
-private:
+
+public:
     svg::Polyline MakeRoute(const std::vector<StopPtrConst>& stops,
                             const sphere::Projector& projector,
                             const svg::Color &color) const;

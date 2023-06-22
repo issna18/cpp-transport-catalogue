@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include "json.h"
 #include "geo.h"
 #include "svg.h"
@@ -67,6 +66,9 @@ using BusPtrConst = const Bus*;
 
 struct RenderSettings
 {
+    RenderSettings() = default;
+    RenderSettings(const json::Node& node);
+    bool FromJSON(const json::Node& node);
     double width {0.0};
     double height {0.0};
     double padding {0.0};

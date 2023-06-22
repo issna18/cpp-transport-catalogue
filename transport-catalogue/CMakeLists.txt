@@ -8,6 +8,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(PROTO_FILES
+    map_renderer.proto
+    svg.proto
     transport_catalogue.proto
 )
 

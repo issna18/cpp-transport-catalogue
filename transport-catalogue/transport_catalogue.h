@@ -2,6 +2,8 @@
 
 #include "domain.h"
 
+#include <transport_catalogue.pb.h>
+
 #include <deque>
 #include <set>
 #include <string>
@@ -36,8 +38,8 @@ public:
     const std::deque<Bus>& GetBuses() const;
     const std::deque<Stop>& GetStops() const;
 
-    bool Serialize(std::ostream& output) const;
-    bool Deserialize(std::istream &input);
+    bool Serialize(proto::TransportCatalogue& proto_catalogue) const;
+    bool Deserialize(const proto::TransportCatalogue& proto_catalogue);
 
 private:
     std::deque<Stop> m_dqstops;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "json_reader.h"
+#include "map_renderer.h"
 #include "transport_catalogue.h"
 
 #include <ostream>
@@ -14,6 +15,7 @@ public:
     void Serialize();
     void Deserialize();
 private:
-    TransportCatalogue m_transport_catalogue;
     const json::Reader m_reader;
+    TransportCatalogue m_transport_catalogue;
+    MapRenderer m_renderer;
 };

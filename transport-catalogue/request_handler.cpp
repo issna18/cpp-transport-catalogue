@@ -1,6 +1,6 @@
 #include "json_builder.h"
-#include "map_renderer.h"
 #include "request_handler.h"
+#include "serialization.h"
 #include "transport_router.h"
 
 #include <fstream>
@@ -44,6 +44,7 @@ struct QueryVisitor {
     json::Node operator()(const MapQuery& query) {
         const auto info {std::get<MapInfo>(query.Get(renderer))};
         return info.ToJSON();
+        //return ErrorMessage(query.request_id);
     }
 
     json::Node operator()(const RouteQuery& query) {
@@ -56,7 +57,8 @@ struct QueryVisitor {
 };
 
 RequestHandler::RequestHandler(std::istream& in)
-    : m_reader(in)
+    : m_reader(in),
+      m_renderer(m_transport_catalogue, m_reader.GetRenderSettings())
 {}
 
 void RequestHandler::ProcessBaseRequests() {
@@ -68,10 +70,6 @@ void RequestHandler::ProcessBaseRequests() {
 
 void RequestHandler::ProcessStatRequests(std::ostream& out)
 {
-    MapRenderer renderer(m_transport_catalogue,
-                         json::MakeRenderSettingsFromJSON(
-                             m_reader.GetMainRequest("render_settings"s))
-                        );
     transport::Router router(m_transport_catalogue,
                              json::MakeRoutingSettingsFromJSON(
                                 m_reader.GetMainRequest("routing_settings"s))
@@ -81,7 +79,10 @@ void RequestHandler::ProcessStatRequests(std::ostream& out)
 
     json::Array results;
     for (const auto& query : queries) {
-        results.emplace_back(std::visit(QueryVisitor {m_transport_catalogue, renderer, router}, query));
+        results.emplace_back(std::visit(QueryVisitor
+                          {m_transport_catalogue,
+                           m_renderer,
+                           router}, query));
     }
 
     if (!results.empty()) {
@@ -91,24 +92,16 @@ void RequestHandler::ProcessStatRequests(std::ostream& out)
 }
 
 void RequestHandler::Serialize() {
-    const std::string output_file {
-        m_reader.GetMainRequest("serialization_settings"s)
-                .AsDict()
-                .at("file"s)
-                .AsString()
-    };
-    std::fstream output_stream(output_file, std::ios::out | std::ios::trunc | std::ios::binary);
+    TransportDatabase database;
+    m_transport_catalogue.Serialize(*database.GetData().mutable_catalogue());
+    m_renderer.Serialize(*database.GetData().mutable_renderer());
 
-    m_transport_catalogue.Serialize(output_stream);
+    database.SaveTo(m_reader.GetSerializationSettings().file_name);
 }
 
 void RequestHandler::Deserialize() {
-    const std::string input_file {
-        m_reader.GetMainRequest("serialization_settings"s)
-                .AsDict()
-                .at("file"s)
-                .AsString()
-    };
-    std::fstream input_stream(input_file, std::ios::in | std::ios::binary);
-    m_transport_catalogue.Deserialize(input_stream);
+    TransportDatabase database;
+    database.LoadFrom(m_reader.GetSerializationSettings().file_name);
+    m_transport_catalogue.Deserialize(database.GetData().catalogue());
+    m_renderer.Deserialize(database.GetData().renderer());
 }
