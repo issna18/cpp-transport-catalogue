@@ -77,7 +77,10 @@ void Router::BuildEdgesForBus(const Bus& bus) {
 }
 
 inline double Router::CalculateWeight(double distance) const {
-    return (60 * distance) / (1000 * m_settings.bus_velocity);
+    constexpr int meters_in_kilometer {1000};
+    constexpr int minutes_in_hour {60};
+    return (minutes_in_hour * distance) /
+           (meters_in_kilometer * m_settings.bus_velocity);
 }
 
 graph::EdgeId Router::MakeEdge(graph::VertexId from,

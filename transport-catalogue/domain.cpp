@@ -139,76 +139,82 @@ RoutingSettings::RoutingSettings(const json::Node& node) {
     bus_wait_time = json.at("bus_wait_time"s).AsInt();
 }
 
-json::Node BusInfo::ToJSON(int request_id) const {
-    using namespace std::string_literals;
+json::Node ErrorInfo::ToJSON(int request_id) const {
     return json::Builder{}
-    .StartDict()
-    .Key("request_id"s).Value(request_id)
-    .Key("curvature"s).Value(route_length / geo_length)
-    .Key("route_length"s).Value(route_length)
-    .Key("stop_count"s).Value(static_cast<int>(num_stops))
-    .Key("unique_stop_count"s).Value(static_cast<int>(num_unique))
-    .EndDict()
-    .Build();
+        .StartDict()
+            .Key("request_id"s).Value(request_id)
+            .Key("error_message"s).Value("not found"s)
+        .EndDict()
+        .Build();
+}
+
+json::Node BusInfo::ToJSON(int request_id) const {
+    return json::Builder{}
+        .StartDict()
+            .Key("request_id"s).Value(request_id)
+            .Key("curvature"s).Value(route_length / geo_length)
+            .Key("route_length"s).Value(route_length)
+            .Key("stop_count"s).Value(static_cast<int>(num_stops))
+            .Key("unique_stop_count"s).Value(static_cast<int>(num_unique))
+        .EndDict()
+        .Build();
 }
 
 json::Node StopInfo::ToJSON(int request_id) const {
-    using namespace std::string_literals;
     return json::Builder{}
-    .StartDict()
-    .Key("request_id"s).Value(request_id)
-    .Key("buses"s).Value([this]()
-    {
-    json::Array value;
-    for (const auto bus : buses) {
-        value.emplace_back(std::string(bus));
-    }
-    return value;
-}())
-.EndDict()
-.Build();
+        .StartDict()
+            .Key("request_id"s).Value(request_id)
+            .Key("buses"s).Value([this]()
+                {
+                    json::Array value;
+                    for (const auto bus : buses) {
+                        value.emplace_back(std::string(bus));
+                    }
+                    return value;
+                }())
+        .EndDict()
+        .Build();
 }
 
 json::Node MapInfo::ToJSON(int request_id) const {
-    using namespace std::string_literals;
     return json::Builder{}
-    .StartDict()
-    .Key("request_id"s).Value(request_id)
-    .Key("map"s).Value(map)
-    .EndDict()
-    .Build();
+        .StartDict()
+            .Key("request_id"s).Value(request_id)
+            .Key("map"s).Value(map)
+        .EndDict()
+        .Build();
 }
 
-
 json::Node RouteInfo::RouteItem::ToJSON() const {
-    using namespace std::string_literals;
     auto item = json::Builder{}
-            .StartDict()
+        .StartDict()
             .Key(is_wait ? "stop_name"s : "bus"s).Value(std::string(name))
             .Key("time"s).Value(time)
             .Key("type"s).Value(is_wait ? "Wait"s : "Bus"s)
-            .EndDict()
-            .Build();
+        .EndDict()
+        .Build();
 
-    if (!is_wait) item.AsDict().emplace("span_count", json::Node(static_cast<int>(span_count)));
+    if (!is_wait) {
+        item.AsDict().emplace("span_count"s,
+                              json::Node(static_cast<int>(span_count)));
+    }
     return item;
 }
 
 json::Node RouteInfo::ToJSON(int request_id) const {
-    using namespace std::string_literals;
     return json::Builder{}
-    .StartDict()
-    .Key("request_id"s).Value(request_id)
-    .Key("total_time"s).Value(total_time)
-    .Key("items"s).Value([this]()
-    {
-    json::Array value;
-    for (const auto& item : items) {
-        value.emplace_back(item.ToJSON());
-    }
-    return value;
-}())
-.EndDict()
-.Build();
+        .StartDict()
+            .Key("request_id"s).Value(request_id)
+            .Key("total_time"s).Value(total_time)
+            .Key("items"s).Value([this]()
+                {
+                    json::Array value;
+                    for (const auto& item : items) {
+                        value.emplace_back(item.ToJSON());
+                    }
+                    return value;
+                }())
+        .EndDict()
+        .Build();
 }
 

@@ -21,7 +21,9 @@ const Node& Reader::GetNodeByKey(const std::string& key) const {
     return empty;
 }
 
-std::pair<std::vector<StopData>, std::vector<BusData>> Reader::GetStopsAndBuses() const {
+std::pair<std::vector<StopData>, std::vector<BusData>>
+Reader::GetStopsAndBuses() const
+{
     const auto& requests {GetNodeByKey("base_requests"s).AsArray()};
     std::vector<StopData> stops;
     std::vector<BusData> buses;

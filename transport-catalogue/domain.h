@@ -1,7 +1,6 @@
 #pragma once
 
 #include "json.h"
-#include "json_builder.h"
 #include "geo.h"
 #include "svg.h"
 
@@ -110,16 +109,7 @@ struct Info {
 };
 
 struct ErrorInfo : public Info {
-    json::Node ToJSON(int request_id) const override
-    {
-        using namespace std::string_literals;
-        return json::Builder{}
-            .StartDict()
-                .Key("request_id"s).Value(request_id)
-                .Key("error_message"s).Value("not found"s)
-            .EndDict()
-            .Build();
-    };
+    json::Node ToJSON(int request_id) const override;
 };
 
 struct BusInfo : public Info {
