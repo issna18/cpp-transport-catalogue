@@ -117,5 +117,5 @@ public:
 
 struct MapQuery {
     int request_id;
-    Info Get(const MapRenderer& renderer) const;
+    std::unique_ptr<Info> Request(const MapRenderer& renderer) const;
 };

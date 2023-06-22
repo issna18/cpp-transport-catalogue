@@ -16,29 +16,30 @@ Router::Router(const TransportCatalogue& catalogue, const RoutingSettings& setti
     m_router = std::make_unique<graph::Router<double>>(*m_graph);
 }
 
-Info Router::BuildRoute(std::string_view from,
-                         std::string_view to, int request_id) const {
-        const graph::VertexId& vertex_from {m_name_to_vertex_wait.at(from)};
-        const graph::VertexId& vertex_to {m_name_to_vertex_wait.at(to)};
-        auto route_info = m_router->BuildRoute(vertex_from, vertex_to);
-        if (route_info.has_value()) {
-            std::vector<RouteItem> items;
-            items.reserve(route_info->edges.size());
-            for (const auto& edge_id : route_info->edges) {
-
-                items.emplace_back([this](graph::EdgeId id){
-                    const auto& edge {m_graph->GetEdge(id)};
-                    const auto& data {m_edge_to_data.at(id)};
-                    if (data.is_wait)
-                        return RouteItem{m_vertex_to_name.at(edge.from), data.is_wait, edge.weight};
-                    return RouteItem{data.bus, data.is_wait, edge.weight, data.span_count};
-                    }(edge_id)
-                );
-            }
-            return RouteInfo{request_id, ResultStatus::Success, route_info->weight, std::move(items)};
+std::unique_ptr<Info> Router::BuildRoute(std::string_view from,
+                         std::string_view to) const
+{
+    const graph::VertexId& vertex_from {m_name_to_vertex_wait.at(from)};
+    const graph::VertexId& vertex_to {m_name_to_vertex_wait.at(to)};
+    auto route_info = m_router->BuildRoute(vertex_from, vertex_to);
+    if (route_info.has_value()) {
+        std::vector<RouteInfo::RouteItem> items;
+        items.reserve(route_info->edges.size());
+        for (const auto& edge_id : route_info->edges) {
+            items.emplace_back([this](graph::EdgeId id) {
+                const auto& edge {m_graph->GetEdge(id)};
+                const auto& data {m_edge_to_data.at(id)};
+                if (data.is_wait) {
+                    return RouteInfo::RouteItem{m_vertex_to_name.at(edge.from), data.is_wait, edge.weight};
+                }
+                return RouteInfo::RouteItem{data.bus, data.is_wait, edge.weight, data.span_count};
+            } (edge_id) );
         }
-        return RouteInfo{request_id};
+        return std::make_unique<RouteInfo>(route_info->weight,
+                                           std::move(items));
     }
+    return std::make_unique<ErrorInfo>();
+}
 
 void Router::BuildVertices(const std::deque<Stop>& stops) {
     graph::VertexId id {0};

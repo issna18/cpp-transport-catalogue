@@ -8,22 +8,15 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(PROTO_FILES
+    graph.proto
     map_renderer.proto
     svg.proto
     transport_catalogue.proto
+    transport_router.proto
 )
 
 protobuf_generate_cpp(PROTO_CXX_SOURCES PROTO_CXX_HEADERS
     ${PROTO_FILES}
-)
-
-set(RESOURCES
-    resources/input1.json
-    resources/input2.json
-    resources/input3.json
-    resources/input4.json
-    resources/input5.json
-    resources/input_pr.json
 )
 
 add_executable(transport_catalogue
@@ -72,5 +65,3 @@ target_compile_options(transport_catalogue PUBLIC
 
 target_compile_options(transport_catalogue PUBLIC ${warnings} -fsanitize=address)
 target_link_options(transport_catalogue PUBLIC -fsanitize=address)
-
-file(COPY ${RESOURCES} DESTINATION ${CMAKE_BINARY_DIR})

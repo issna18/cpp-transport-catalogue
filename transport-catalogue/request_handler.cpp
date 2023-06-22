@@ -1,7 +1,6 @@
 #include "json_builder.h"
 #include "request_handler.h"
 #include "serialization.h"
-#include "transport_router.h"
 
 #include <fstream>
 #include <string>
@@ -16,52 +15,31 @@ struct QueryVisitor {
     const MapRenderer& renderer;
     const transport::Router& router;
 
-    json::Node ErrorMessage(int request_id) {
-        return json::Builder{}
-            .StartDict()
-                .Key("request_id"s).Value(request_id)
-                .Key("error_message"s).Value("not found"s)
-            .EndDict()
-            .Build();
-    }
-
     json::Node operator()(const BusQuery& query) {
-        const auto info {std::get<BusInfo>(query.Get(catalogue))};
-        if (info.status == ResultStatus::NotFound) {
-            return ErrorMessage(info.request_id);
-        }
-        return info.ToJSON();
+        return query.Request(catalogue).get()->ToJSON(query.request_id);
     }
 
     json::Node operator()(const StopQuery& query) {
-        const auto info {std::get<StopInfo>(query.Get(catalogue))};
-        if (info.status == ResultStatus::NotFound) {
-            return ErrorMessage(info.request_id);
-        }
-        return info.ToJSON();
+        return query.Request(catalogue).get()->ToJSON(query.request_id);
     }
 
     json::Node operator()(const MapQuery& query) {
-        const auto info {std::get<MapInfo>(query.Get(renderer))};
-        return info.ToJSON();
-        //return ErrorMessage(query.request_id);
+        return query.Request(renderer).get()->ToJSON(query.request_id);
     }
 
     json::Node operator()(const RouteQuery& query) {
-        const auto info {std::get<RouteInfo>(query.Get(router))};
-        if (info.status == ResultStatus::NotFound) {
-            return ErrorMessage(info.request_id);
-        }
-        return info.ToJSON();
+        return query.Request(router).get()->ToJSON(query.request_id);
     }
 };
 
 RequestHandler::RequestHandler(std::istream& in)
     : m_reader(in),
-      m_renderer(m_transport_catalogue, m_reader.GetRenderSettings())
+      m_renderer(m_transport_catalogue, m_reader.GetRenderSettings()),
+      m_router(m_transport_catalogue, m_reader.GetRoutingSettings())
 {}
 
-void RequestHandler::ProcessBaseRequests() {
+void RequestHandler::ProcessBaseRequests()
+{
     const auto [stops, buses] {m_reader.GetStopsAndBuses()};
 
     m_transport_catalogue.AddStops(stops);
@@ -70,11 +48,6 @@ void RequestHandler::ProcessBaseRequests() {
 
 void RequestHandler::ProcessStatRequests(std::ostream& out)
 {
-    transport::Router router(m_transport_catalogue,
-                             json::MakeRoutingSettingsFromJSON(
-                                m_reader.GetMainRequest("routing_settings"s))
-                            );
-
     std::vector<Query> queries {m_reader.GetQueries()};
 
     json::Array results;
@@ -82,7 +55,7 @@ void RequestHandler::ProcessStatRequests(std::ostream& out)
         results.emplace_back(std::visit(QueryVisitor
                           {m_transport_catalogue,
                            m_renderer,
-                           router}, query));
+                           m_router}, query));
     }
 
     if (!results.empty()) {
@@ -91,15 +64,16 @@ void RequestHandler::ProcessStatRequests(std::ostream& out)
     }
 }
 
-void RequestHandler::Serialize() {
+void RequestHandler::Serialize()
+{
     TransportDatabase database;
     m_transport_catalogue.Serialize(*database.GetData().mutable_catalogue());
     m_renderer.Serialize(*database.GetData().mutable_renderer());
-
     database.SaveTo(m_reader.GetSerializationSettings().file_name);
 }
 
-void RequestHandler::Deserialize() {
+void RequestHandler::Deserialize()
+{
     TransportDatabase database;
     database.LoadFrom(m_reader.GetSerializationSettings().file_name);
     m_transport_catalogue.Deserialize(database.GetData().catalogue());

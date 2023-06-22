@@ -32,8 +32,8 @@ public:
     int GetDistance(std::string_view name,
                     std::string_view other) const;
 
-    Info GetBusInfo(int id, std::string_view name) const;
-    Info GetStopInfo(int id, std::string_view name) const;
+    std::unique_ptr<Info> GetBusInfo(std::string_view name) const;
+    std::unique_ptr<Info> GetStopInfo(std::string_view name) const;
 
     const std::deque<Bus>& GetBuses() const;
     const std::deque<Stop>& GetStops() const;
@@ -53,11 +53,11 @@ private:
 struct BusQuery {
     int request_id;
     std::string name;
-    Info Get(const TransportCatalogue& catalogue) const;
+    std::unique_ptr<Info> Request(const TransportCatalogue& catalogue) const;
 };
 
 struct StopQuery {
     int request_id;
     std::string name;
-    Info Get(const TransportCatalogue& catalogue) const;
+    std::unique_ptr<Info> Request(const TransportCatalogue& catalogue) const;
 };

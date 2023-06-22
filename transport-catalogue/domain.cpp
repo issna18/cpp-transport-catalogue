@@ -81,7 +81,6 @@ size_t PairStopsHasher::operator() (const PairStops stops) const {
 
 RenderSettings::RenderSettings(const json::Node& node)
 {
-
     FromJSON(node);
 }
 
@@ -133,7 +132,14 @@ bool RenderSettings::FromJSON(const json::Node& node) {
     return true;
 }
 
-json::Node BusInfo::ToJSON() const {
+RoutingSettings::RoutingSettings(const json::Node& node) {
+    if (!node.IsDict()) return;
+    const auto& json {node.AsDict()};
+    bus_velocity = json.at("bus_velocity"s).AsDouble();
+    bus_wait_time = json.at("bus_wait_time"s).AsInt();
+}
+
+json::Node BusInfo::ToJSON(int request_id) const {
     using namespace std::string_literals;
     return json::Builder{}
     .StartDict()
@@ -146,7 +152,7 @@ json::Node BusInfo::ToJSON() const {
     .Build();
 }
 
-json::Node StopInfo::ToJSON() const {
+json::Node StopInfo::ToJSON(int request_id) const {
     using namespace std::string_literals;
     return json::Builder{}
     .StartDict()
@@ -163,7 +169,7 @@ json::Node StopInfo::ToJSON() const {
 .Build();
 }
 
-json::Node MapInfo::ToJSON() const {
+json::Node MapInfo::ToJSON(int request_id) const {
     using namespace std::string_literals;
     return json::Builder{}
     .StartDict()
@@ -174,7 +180,7 @@ json::Node MapInfo::ToJSON() const {
 }
 
 
-json::Node RouteItem::ToJSON() const {
+json::Node RouteInfo::RouteItem::ToJSON() const {
     using namespace std::string_literals;
     auto item = json::Builder{}
             .StartDict()
@@ -188,7 +194,7 @@ json::Node RouteItem::ToJSON() const {
     return item;
 }
 
-json::Node RouteInfo::ToJSON() const {
+json::Node RouteInfo::ToJSON(int request_id) const {
     using namespace std::string_literals;
     return json::Builder{}
     .StartDict()

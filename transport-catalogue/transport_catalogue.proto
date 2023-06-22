@@ -3,6 +3,7 @@ syntax = "proto3";
 option cc_generic_services = false;
 
 import "map_renderer.proto";
+import "transport_router.proto";
 
 package proto;
 
@@ -44,4 +45,5 @@ message TransportCatalogue {
 message TransportDatabase {
     TransportCatalogue catalogue = 1;
     proto.MapRenderer renderer = 2;
+    proto.transport.Router router = 3;
 }

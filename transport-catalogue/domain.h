@@ -1,6 +1,7 @@
 #pragma once
 
 #include "json.h"
+#include "json_builder.h"
 #include "geo.h"
 #include "svg.h"
 
@@ -89,6 +90,7 @@ struct RenderSettings
 
 struct RoutingSettings
 {
+    RoutingSettings(const json::Node& node);
     int bus_wait_time {1};
     double bus_velocity {1.0};
 };
@@ -102,51 +104,82 @@ struct SerializationSettings
     {}
 };
 
-enum class ResultStatus
-{
-    Success,
-    NotFound
+struct Info {
+    virtual ~Info() {};
+    virtual json::Node ToJSON(int request_id) const = 0;
 };
 
-struct BusInfo {
-    int request_id;
-    ResultStatus status {ResultStatus::NotFound};
+struct ErrorInfo : public Info {
+    json::Node ToJSON(int request_id) const override
+    {
+        using namespace std::string_literals;
+        return json::Builder{}
+            .StartDict()
+                .Key("request_id"s).Value(request_id)
+                .Key("error_message"s).Value("not found"s)
+            .EndDict()
+            .Build();
+    };
+};
+
+struct BusInfo : public Info {
+    BusInfo(const std::string_view a_name,
+            size_t a_num_stops,
+            size_t a_num_unique,
+            double a_geo_length,
+            int a_route_length)
+        : name {a_name},
+          num_stops {a_num_stops},
+          num_unique {a_num_unique},
+          geo_length {a_geo_length},
+          route_length {a_route_length}
+    {}
     const std::string_view name;
     size_t num_stops {0};
     size_t num_unique {0};
     double geo_length {0.0};
     int route_length {0};
-    json::Node ToJSON() const;
+    json::Node ToJSON(int request_id) const override;
 };
 
-struct StopInfo {
-    int request_id;
-    ResultStatus status {ResultStatus::NotFound};
+struct StopInfo : public Info {
+    StopInfo(std::string_view a_name, const std::set<std::string_view>& a_buses)
+        : name {a_name},
+          buses {a_buses}
+    {}
+    StopInfo(std::string_view a_name)
+        : name {a_name}
+    {}
     const std::string_view name;
     const std::set<std::string_view> buses;
-    json::Node ToJSON() const;
+    json::Node ToJSON(int request_id) const override;
 };
 
-struct MapInfo {
-    int request_id;
+struct MapInfo : public Info {
+    MapInfo(std::string a_map)
+        : map {std::move(a_map)}
+    {}
+
     std::string map;
-    json::Node ToJSON() const;
+    json::Node ToJSON(int request_id) const override;
 };
 
-struct RouteItem {
-    const std::string_view name;
-    bool is_wait {false};
-    double time {0.0};
-    size_t span_count {0};
-    json::Node ToJSON() const;
-};
 
-struct RouteInfo {
-    int request_id;
-    ResultStatus status {ResultStatus::NotFound};
-    double total_time {0.0};
-    std::vector<RouteItem> items {};
-    json::Node ToJSON() const;
-};
+struct RouteInfo : public Info {
+    struct RouteItem {
+        const std::string_view name;
+        bool is_wait {false};
+        double time {0.0};
+        size_t span_count {0};
+        json::Node ToJSON() const;
+    };
 
-using Info = std::variant<BusInfo, StopInfo, MapInfo, RouteInfo>;
+    RouteInfo(double a_total_time, std::vector<RouteItem>&& a_items)
+        : total_time {a_total_time},
+          items {std::move(a_items)}
+    {}
+
+    double total_time;
+    std::vector<RouteItem> items;
+    json::Node ToJSON(int request_id) const override;
+};

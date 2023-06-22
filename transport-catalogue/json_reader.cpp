@@ -14,7 +14,7 @@ Reader::Reader(std::istream& in)
     : m_json {Load(in)}
 {}
 
-const Node& Reader::GetMainRequest(const std::string& key) const {
+const Node& Reader::GetNodeByKey(const std::string& key) const {
     if (m_json.GetRoot().AsDict().count(key)) {
         return m_json.GetRoot().AsDict().at(key);
     }
@@ -22,7 +22,7 @@ const Node& Reader::GetMainRequest(const std::string& key) const {
 }
 
 std::pair<std::vector<StopData>, std::vector<BusData>> Reader::GetStopsAndBuses() const {
-    const auto& requests {GetMainRequest("base_requests"s).AsArray()};
+    const auto& requests {GetNodeByKey("base_requests"s).AsArray()};
     std::vector<StopData> stops;
     std::vector<BusData> buses;
 
@@ -40,7 +40,7 @@ std::pair<std::vector<StopData>, std::vector<BusData>> Reader::GetStopsAndBuses(
 }
 
 std::vector<Query> Reader::GetQueries() const {
-    const auto& requests {GetMainRequest("stat_requests"s).AsArray()};
+    const auto& requests {GetNodeByKey("stat_requests"s).AsArray()};
     std::vector<Query> queries;
 
     for (const json::Node& req : requests) {
@@ -64,20 +64,15 @@ std::vector<Query> Reader::GetQueries() const {
 }
 
 RenderSettings Reader::GetRenderSettings() const {
-    return RenderSettings(GetMainRequest("render_settings"s));
+    return RenderSettings(GetNodeByKey("render_settings"s));
 }
 
 SerializationSettings Reader::GetSerializationSettings() const {
-    return SerializationSettings(GetMainRequest("serialization_settings"s));
+    return SerializationSettings(GetNodeByKey("serialization_settings"s));
 }
 
-RoutingSettings MakeRoutingSettingsFromJSON(const Node& node) {
-    if (!node.IsDict()) return {};
-    const auto& json {node.AsDict()};
-    return {
-          json.at("bus_wait_time"s).AsInt(),
-          json.at("bus_velocity"s).AsDouble()
-    };
+RoutingSettings Reader::GetRoutingSettings() const {
+    return RoutingSettings(GetNodeByKey("routing_setings"s));
 }
 
 }

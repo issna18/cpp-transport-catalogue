@@ -17,11 +17,11 @@ bool IsZero(double value) {
 
 } //namespace sphere
 
-Info MapQuery::Get(const MapRenderer& renderer) const
+std::unique_ptr<Info> MapQuery::Request(const MapRenderer& renderer) const
 {
     std::stringstream ssout;
     renderer.Draw(ssout);
-    return MapInfo {request_id, ssout.str()};
+    return std::make_unique<MapInfo>(ssout.str());
 }
 
 void MapRenderer::SetSettings(const RenderSettings& settings) {
@@ -121,8 +121,7 @@ bool MapRenderer::Serialize(proto::MapRenderer &proto_renderer) const {
             const svg::Color& color_variant)
     {
         if (std::holds_alternative<std::string>(color_variant)) {
-            proto_color->set_str_value(
-                        std::get<std::string>(color_variant));
+            proto_color->set_str_value(std::get<std::string>(color_variant));
         }
         else if (std::holds_alternative<svg::Rgb>(color_variant)) {
             const auto& color {std::get<svg::Rgb>(color_variant)};
@@ -170,22 +169,21 @@ bool MapRenderer::Deserialize(const proto::MapRenderer& proto_renderer)
 
     auto load_color = [](const proto::svg::Color& proto_color)
     {
-        if(proto_color.has_str_value()) {
+        if(proto_color.variant_case() == proto::svg::Color::kStrValue) {
             return svg::Color {proto_color.str_value()};
-
         }
-        else if(proto_color.has_rgb_value()) {
+        else if(proto_color.variant_case() == proto::svg::Color::kRgbValue) {
             svg::Rgb rgb;
-            rgb.red = proto_color.rgb_value().red();
-            rgb.green = proto_color.rgb_value().green();
-            rgb.blue = proto_color.rgb_value().blue();
+            rgb.red = static_cast<uint8_t>(proto_color.rgb_value().red());
+            rgb.green = static_cast<uint8_t>(proto_color.rgb_value().green());
+            rgb.blue = static_cast<uint8_t>(proto_color.rgb_value().blue());
             return svg::Color {std::move(rgb)};
         }
-        else if(proto_color.has_rgba_value()) {
+        else if(proto_color.variant_case() == proto::svg::Color::kRgbaValue) {
             svg::Rgba rgba;
-            rgba.red = proto_color.rgba_value().red();
-            rgba.green = proto_color.rgba_value().green();
-            rgba.blue = proto_color.rgba_value().blue();
+            rgba.red = static_cast<uint8_t>(proto_color.rgba_value().red());
+            rgba.green = static_cast<uint8_t>(proto_color.rgba_value().green());
+            rgba.blue = static_cast<uint8_t>(proto_color.rgba_value().blue());
             rgba.opacity = proto_color.rgba_value().opacity();
             return svg::Color {std::move(rgba)};
         }

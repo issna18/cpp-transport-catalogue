@@ -15,8 +15,8 @@ class Router
 public:
     Router(const TransportCatalogue& catalogue, const RoutingSettings& settings);
 
-    Info BuildRoute(std::string_view from,
-                         std::string_view to, int request_id) const;
+    std::unique_ptr<Info> BuildRoute(std::string_view from,
+                                     std::string_view to) const;
 
 private:
     struct EdgeData {
@@ -68,8 +68,8 @@ struct RouteQuery {
     int request_id;
     std::string from;
     std::string to;
-    Info Get(const transport::Router& router) const
+    std::unique_ptr<Info> Request(const transport::Router& router) const
     {
-        return router.BuildRoute(from, to, request_id);
+        return router.BuildRoute(from, to);
     }
 };

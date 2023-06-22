@@ -21,7 +21,7 @@ message Rgba {
 }
 
 message Color {
-    oneof color_variant {
+    oneof variant {
         string str_value = 1;
         Rgb rgb_value = 2;
         Rgba rgba_value = 3;

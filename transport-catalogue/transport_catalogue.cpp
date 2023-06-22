@@ -83,46 +83,32 @@ int TransportCatalogue::GetDistance(std::string_view name,
 
 }
 
-Info TransportCatalogue::GetBusInfo(int id, std::string_view name) const
+std::unique_ptr<Info> TransportCatalogue::GetBusInfo(std::string_view name) const
 {
     if (m_names_buses.count(name) == 0) {
-        return BusInfo {
-            id,
-            ResultStatus::NotFound,
-            name,
-            0,
-            0,
-            0,
-            0
-        };
+        return std::make_unique<ErrorInfo>();
     }
 
     const Bus* bus_ptr {m_names_buses.at(name)};
-    return BusInfo {
-        id,
-        ResultStatus::Success,
+    return std::make_unique<BusInfo>(
         bus_ptr->name,
         bus_ptr->stops.size(),
         bus_ptr->num_unique,
         bus_ptr->geo_length,
-        bus_ptr->route_length
-    };
+        bus_ptr->route_length);
 }
 
-Info TransportCatalogue::GetStopInfo(int id, std::string_view name) const
+std::unique_ptr<Info> TransportCatalogue::GetStopInfo(std::string_view name) const
 {
     if (m_names_stops.count(name) == 0) {
-        return StopInfo {id, ResultStatus::NotFound, name, {}};
+        return std::make_unique<ErrorInfo>();
     }
 
     if (m_stop_to_buses.count(name) == 0) {
-        return StopInfo {id, ResultStatus::Success, name, {}};
+        return std::make_unique<StopInfo>(name);
     }
 
-    return StopInfo {id, ResultStatus::Success,
-                     name,
-                     {m_stop_to_buses.find(name)->second}
-    };
+    return std::make_unique<StopInfo>(name, m_stop_to_buses.find(name)->second);
 }
 
 const std::deque<Bus>& TransportCatalogue::GetBuses() const
@@ -238,13 +224,13 @@ bool TransportCatalogue::Deserialize(const proto::TransportCatalogue& proto_cata
 }
 
 
-Info BusQuery::Get(const TransportCatalogue& catalogue) const
+std::unique_ptr<Info> BusQuery::Request(const TransportCatalogue& catalogue) const
 {
-    return catalogue.GetBusInfo(request_id, name);
+    return catalogue.GetBusInfo(name);
 }
 
-Info StopQuery::Get(const TransportCatalogue& catalogue) const
+std::unique_ptr<Info> StopQuery::Request(const TransportCatalogue& catalogue) const
 {
-    return catalogue.GetStopInfo(request_id, name);
+    return catalogue.GetStopInfo(name);
 }
 
