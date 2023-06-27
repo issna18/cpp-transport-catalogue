@@ -95,8 +95,9 @@ Router<Weight>::Router(const Graph& graph)
 }
 
 template <typename Weight>
-std::optional<typename Router<Weight>::RouteInfo> Router<Weight>::BuildRoute(VertexId from,
-                                                                             VertexId to) const {
+std::optional<typename Router<Weight>::RouteInfo>
+Router<Weight>::BuildRoute(VertexId from, VertexId to) const
+{
     const auto& route_internal_data = routes_internal_data_.at(from).at(to);
     if (!route_internal_data) {
         return std::nullopt;

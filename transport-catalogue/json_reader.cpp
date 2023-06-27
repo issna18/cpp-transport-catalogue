@@ -74,7 +74,7 @@ SerializationSettings Reader::GetSerializationSettings() const {
 }
 
 RoutingSettings Reader::GetRoutingSettings() const {
-    return RoutingSettings(GetNodeByKey("routing_setings"s));
+    return RoutingSettings(GetNodeByKey("routing_settings"s));
 }
 
 }

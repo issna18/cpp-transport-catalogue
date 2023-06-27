@@ -43,6 +43,7 @@ void RequestHandler::ProcessBaseRequests()
 
     m_transport_catalogue.AddStops(stops);
     m_transport_catalogue.AddBuses(buses);
+    m_router.BuildGraph();
 }
 
 void RequestHandler::ProcessStatRequests(std::ostream& out)
@@ -63,11 +64,12 @@ void RequestHandler::ProcessStatRequests(std::ostream& out)
     }
 }
 
-void RequestHandler::Serialize()
+void RequestHandler::Serialize() const
 {
     TransportDatabase database;
     m_transport_catalogue.Serialize(*database.GetData().mutable_catalogue());
     m_renderer.Serialize(*database.GetData().mutable_renderer());
+    m_router.Serialize(*database.GetData().mutable_router());
     database.SaveTo(m_reader.GetSerializationSettings().file_name);
 }
 
@@ -77,4 +79,5 @@ void RequestHandler::Deserialize()
     database.LoadFrom(m_reader.GetSerializationSettings().file_name);
     m_transport_catalogue.Deserialize(database.GetData().catalogue());
     m_renderer.Deserialize(database.GetData().renderer());
+    m_router.Deserialize(database.GetData().router());
 }

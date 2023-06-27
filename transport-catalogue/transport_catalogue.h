@@ -35,6 +35,9 @@ public:
     std::unique_ptr<Info> GetBusInfo(std::string_view name) const;
     std::unique_ptr<Info> GetStopInfo(std::string_view name) const;
 
+    BusPtrConst GetBus(std::string_view name) const;
+    StopPtrConst GetStop(std::string_view name) const;
+
     const std::deque<Bus>& GetBuses() const;
     const std::deque<Stop>& GetStops() const;
 

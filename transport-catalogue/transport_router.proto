@@ -9,6 +9,17 @@ message RoutingSettings {
     double bus_velocity = 2;
 }
 
+message EdgeData {
+    string bus = 1;
+    uint64 span_count = 2;
+    bool is_wait = 3;
+}
+
 message Router {
     RoutingSettings settings = 1;
+    proto.graph.Graph graph = 2;
+    map<uint64, string> vertex_to_name = 3;
+    map<string, uint64> name_to_vertex_wait = 4;
+    map<string, uint64> name_to_vertex_go = 5;
+    map<uint64, EdgeData> edge_to_data = 6;
 }

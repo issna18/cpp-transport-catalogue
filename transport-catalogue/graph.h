@@ -1,5 +1,7 @@
 #pragma once
 
+#include <graph.pb.h>
+
 #include "ranges.h"
 
 #include <cstdlib>
@@ -32,6 +34,12 @@ public:
     size_t GetEdgeCount() const;
     const Edge<Weight>& GetEdge(EdgeId edge_id) const;
     IncidentEdgesRange GetIncidentEdges(VertexId vertex) const;
+
+    bool Serialise(proto::graph::Graph &proto_graph) const;
+    bool Deserialise(const proto::graph::Graph &proto_graph);
+
+    void Print() const;
+
 
 private:
     std::vector<Edge<Weight>> edges_;
@@ -70,6 +78,65 @@ template <typename Weight>
 typename DirectedWeightedGraph<Weight>::IncidentEdgesRange
 DirectedWeightedGraph<Weight>::GetIncidentEdges(VertexId vertex) const {
     return ranges::AsRange(incidence_lists_.at(vertex));
+}
+
+template <typename Weight>
+bool DirectedWeightedGraph<Weight>::Serialise(proto::graph::Graph &proto_graph) const {
+
+    for(const auto& edge : edges_) {
+        auto proto_edge = proto_graph.add_edges();
+        proto_edge->set_from(edge.from);
+        proto_edge->set_to(edge.to);
+        proto_edge->set_weight(edge.weight);
+    }
+
+    for(const auto& list : incidence_lists_) {
+        auto proto_list = proto_graph.add_incidence_lists();
+        for(const auto& edge : list) {
+            proto_list->add_edges_id(edge);
+        }
+    }
+    return true;
+}
+
+template <typename Weight>
+bool DirectedWeightedGraph<Weight>::Deserialise(const proto::graph::Graph &proto_graph)
+{
+    for (const auto& proto_edge : proto_graph.edges()) {
+        AddEdge({
+                    proto_edge.from(),
+                    proto_edge.to(),
+                    proto_edge.weight()
+                });
+    }
+    return true;
+}
+
+template <typename Weight>
+void DirectedWeightedGraph<Weight>::Print() const
+{
+
+    size_t id {0};
+    std::cout << "Edges\n";
+    for(const auto& edge : edges_) {
+        std::cout << id++ << ": "
+                  << edge.from
+                  << " => "
+                  << edge.to
+                  << ", "
+                  << edge.weight
+                  << std::endl;
+    }
+
+    size_t vertex_id {0};
+    std::cout << "Verices\n";
+    for(const auto& list : incidence_lists_) {
+        std::cout << vertex_id++ << ": ";
+        for(const EdgeId& edge_id : list) {
+            std::cout << edge_id << " ";
+        }
+        std::cout << std::endl;
+    }
 }
 
 }  // namespace graph

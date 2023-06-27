@@ -13,7 +13,7 @@ public:
     RequestHandler(std::istream& in);
     void ProcessBaseRequests();
     void ProcessStatRequests(std::ostream& out = std::cout);
-    void Serialize();
+    void Serialize() const;
     void Deserialize();
 private:
     const json::Reader m_reader;

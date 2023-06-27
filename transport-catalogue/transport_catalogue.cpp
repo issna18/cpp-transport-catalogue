@@ -111,6 +111,18 @@ std::unique_ptr<Info> TransportCatalogue::GetStopInfo(std::string_view name) con
     return std::make_unique<StopInfo>(name, m_stop_to_buses.find(name)->second);
 }
 
+BusPtrConst TransportCatalogue::GetBus(std::string_view name) const
+{
+    if (m_names_buses.count(name) == 0) return nullptr;
+    return m_names_buses.at(name);
+}
+
+StopPtrConst TransportCatalogue::GetStop(std::string_view name) const
+{
+    if (m_names_stops.count(name) == 0) return nullptr;
+    return m_names_stops.at(name);
+}
+
 const std::deque<Bus>& TransportCatalogue::GetBuses() const
 {
     return m_dqbuses;

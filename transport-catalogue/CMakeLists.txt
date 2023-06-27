@@ -63,5 +63,5 @@ target_compile_options(transport_catalogue PUBLIC
  #   -Werror
 )
 
-target_compile_options(transport_catalogue PUBLIC ${warnings} -fsanitize=address)
-target_link_options(transport_catalogue PUBLIC -fsanitize=address)
+#target_compile_options(transport_catalogue PUBLIC ${warnings} -fsanitize=address)
+#target_link_options(transport_catalogue PUBLIC -fsanitize=address)

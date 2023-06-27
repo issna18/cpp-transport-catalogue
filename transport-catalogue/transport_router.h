@@ -5,6 +5,8 @@
 #include "router.h"
 #include "transport_catalogue.h"
 
+#include <transport_router.pb.h>
+
 #include <string_view>
 #include <unordered_map>
 
@@ -15,8 +17,14 @@ class Router
 public:
     Router(const TransportCatalogue& catalogue, const RoutingSettings& settings);
 
+    void BuildGraph();
+
     std::unique_ptr<Info> BuildRoute(std::string_view from,
                                      std::string_view to) const;
+
+    bool Serialize(proto::transport::Router& proto_router) const;
+    bool Deserialize(const proto::transport::Router& proto_router);
+
 
 private:
     struct EdgeData {
@@ -56,9 +64,9 @@ private:
     RoutingSettings m_settings;
     std::unique_ptr<graph::DirectedWeightedGraph<double>> m_graph {nullptr};
     std::unique_ptr<graph::Router<double>> m_router {nullptr};
+    std::unordered_map<graph::VertexId, std::string_view> m_vertex_to_name;
     std::unordered_map<std::string_view, graph::VertexId> m_name_to_vertex_wait;
     std::unordered_map<std::string_view, graph::VertexId> m_name_to_vertex_go;
-    std::unordered_map<graph::VertexId, std::string_view> m_vertex_to_name;
     std::unordered_map<graph::EdgeId, EdgeData> m_edge_to_data;
 };
 

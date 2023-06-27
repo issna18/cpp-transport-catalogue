@@ -96,11 +96,10 @@ struct RoutingSettings
 
 struct SerializationSettings
 {
-    std::string file_name;
-
     SerializationSettings(const json::Node& node)
         : file_name {node.AsDict().at("file").AsString()}
     {}
+    std::string file_name;
 };
 
 struct Info {
