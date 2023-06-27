@@ -112,31 +112,4 @@ bool DirectedWeightedGraph<Weight>::Deserialise(const proto::graph::Graph &proto
     return true;
 }
 
-template <typename Weight>
-void DirectedWeightedGraph<Weight>::Print() const
-{
-
-    size_t id {0};
-    std::cout << "Edges\n";
-    for(const auto& edge : edges_) {
-        std::cout << id++ << ": "
-                  << edge.from
-                  << " => "
-                  << edge.to
-                  << ", "
-                  << edge.weight
-                  << std::endl;
-    }
-
-    size_t vertex_id {0};
-    std::cout << "Verices\n";
-    for(const auto& list : incidence_lists_) {
-        std::cout << vertex_id++ << ": ";
-        for(const EdgeId& edge_id : list) {
-            std::cout << edge_id << " ";
-        }
-        std::cout << std::endl;
-    }
-}
-
 }  // namespace graph

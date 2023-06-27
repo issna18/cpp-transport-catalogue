@@ -103,7 +103,7 @@ public:
     bool Deserialize(const proto::MapRenderer &proto_renderer);
 
 
-public:
+private:
     svg::Polyline MakeRoute(const std::vector<StopPtrConst>& stops,
                             const sphere::Projector& projector,
                             const svg::Color &color) const;

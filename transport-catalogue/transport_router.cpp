@@ -139,7 +139,6 @@ bool Router::Deserialize(const proto::transport::Router &proto_router) {
     const auto nodes_count {m_transport_catalogue.GetStops().size()};
     m_graph = std::make_unique<graph::DirectedWeightedGraph<double>>(2 * nodes_count);
     m_graph->Deserialise(proto_router.graph());
-    //m_graph->Print();
     m_router = std::make_unique<graph::Router<double>>(*m_graph);
 
     for(const auto& [vertex, name] : proto_router.vertex_to_name()) {
