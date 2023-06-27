@@ -49,8 +49,7 @@ add_executable(transport_catalogue
     ${PROTO_FILES}
     ${PROTO_CXX_SOURCES}
     ${PROTO_CXX_HEADERS}
-    ${RESOURCES}
-)
+   )
 
 target_link_libraries(transport_catalogue protobuf::libprotobuf)
 target_include_directories(transport_catalogue PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
