@@ -5,7 +5,7 @@
 #include "transport_catalogue.h"
 #include "transport_router.h"
 
-#include <ostream>
+#include <iostream>
 
 class RequestHandler
 {
@@ -15,6 +15,7 @@ public:
     void ProcessStatRequests(std::ostream& out = std::cout);
     void Serialize() const;
     void Deserialize();
+
 private:
     const json::Reader m_reader;
     TransportCatalogue m_transport_catalogue;

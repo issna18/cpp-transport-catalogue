@@ -1,7 +1,5 @@
 #include "map_renderer.h"
 
-#include <map_renderer.pb.h>
-
 #include <set>
 #include <string>
 #include <sstream>
@@ -113,105 +111,6 @@ void MapRenderer::Draw(std::ostream& out) const
     }
 
     svg.Render(out);
-}
-
-bool MapRenderer::Serialize(proto::MapRenderer &proto_renderer) const {
-
-    auto fill_proto_color = [](proto::svg::Color* proto_color,
-            const svg::Color& color_variant)
-    {
-        if (std::holds_alternative<std::string>(color_variant)) {
-            proto_color->set_str_value(std::get<std::string>(color_variant));
-        }
-        else if (std::holds_alternative<svg::Rgb>(color_variant)) {
-            const auto& color {std::get<svg::Rgb>(color_variant)};
-            auto proto_rgb_color {proto_color->mutable_rgb_value()};
-            proto_rgb_color->set_red(color.red);
-            proto_rgb_color->set_green(color.green);
-            proto_rgb_color->set_blue(color.blue);
-        }
-        else if (std::holds_alternative<svg::Rgba>(color_variant)) {
-            const auto& color {std::get<svg::Rgba>(color_variant)};
-            auto proto_rgba_color {proto_color->mutable_rgba_value()};
-            proto_rgba_color->set_red(color.red);
-            proto_rgba_color->set_green(color.green);
-            proto_rgba_color->set_blue(color.blue);
-            proto_rgba_color->set_opacity(color.opacity);
-        }
-    };
-
-    auto proto_settings = proto_renderer.mutable_settings();
-    proto_settings->set_width(m_settings.width);
-    proto_settings->set_height(m_settings.height);
-    proto_settings->set_padding(m_settings.padding);
-    proto_settings->set_line_width(m_settings.line_width);
-    proto_settings->set_stop_radius(m_settings.stop_radius);
-    proto_settings->set_bus_label_font_size(m_settings.bus_label_font_size);
-    proto_settings->mutable_bus_label_offset()->set_x(m_settings.bus_label_offset.x);
-    proto_settings->mutable_bus_label_offset()->set_y(m_settings.bus_label_offset.y);
-    proto_settings->set_stop_label_font_size(m_settings.stop_label_font_size);
-    proto_settings->mutable_stop_label_offset()->set_x(m_settings.stop_label_offset.x);
-    proto_settings->mutable_stop_label_offset()->set_y(m_settings.stop_label_offset.y);
-    fill_proto_color(proto_settings->mutable_underlayer_color(),
-                     m_settings.underlayer_color);
-    proto_settings->set_underlayer_width(m_settings.underlayer_width);
-
-    for (const auto& color : m_settings.color_palette) {
-        auto proto_color = proto_settings->add_color_palette();
-        fill_proto_color(proto_color, color);
-    }
-
-    return true;
-}
-
-bool MapRenderer::Deserialize(const proto::MapRenderer& proto_renderer)
-{
-
-    auto load_color = [](const proto::svg::Color& proto_color)
-    {
-        if(proto_color.variant_case() == proto::svg::Color::kStrValue) {
-            return svg::Color {proto_color.str_value()};
-        }
-        else if(proto_color.variant_case() == proto::svg::Color::kRgbValue) {
-            svg::Rgb rgb;
-            rgb.red = static_cast<uint8_t>(proto_color.rgb_value().red());
-            rgb.green = static_cast<uint8_t>(proto_color.rgb_value().green());
-            rgb.blue = static_cast<uint8_t>(proto_color.rgb_value().blue());
-            return svg::Color {std::move(rgb)};
-        }
-        else if(proto_color.variant_case() == proto::svg::Color::kRgbaValue) {
-            svg::Rgba rgba;
-            rgba.red = static_cast<uint8_t>(proto_color.rgba_value().red());
-            rgba.green = static_cast<uint8_t>(proto_color.rgba_value().green());
-            rgba.blue = static_cast<uint8_t>(proto_color.rgba_value().blue());
-            rgba.opacity = proto_color.rgba_value().opacity();
-            return svg::Color {std::move(rgba)};
-        }
-        return svg::Color {};
-    };
-
-    const auto& proto_settings {proto_renderer.settings()};
-    RenderSettings settings;
-    settings.width = proto_settings.width();
-    settings.height = proto_settings.height();
-    settings.padding = proto_settings.padding();
-    settings.line_width = proto_settings.line_width();
-    settings.stop_radius = proto_settings.stop_radius();
-    settings.bus_label_font_size = proto_settings.bus_label_font_size();
-    settings.bus_label_offset.x = proto_settings.bus_label_offset().x();
-    settings.bus_label_offset.y = proto_settings.bus_label_offset().y();
-    settings.stop_label_font_size = proto_settings.stop_label_font_size();
-    settings.stop_label_offset.x = proto_settings.stop_label_offset().x();
-    settings.stop_label_offset.y = proto_settings.stop_label_offset().y();
-    settings.underlayer_color = load_color(proto_settings.underlayer_color());
-    settings.underlayer_width = proto_settings.underlayer_width();
-
-    for (const auto& proto_color : proto_settings.color_palette()) {
-        settings.color_palette.push_back(load_color(proto_color));
-    }
-
-    SetSettings(settings);
-    return true;
 }
 
 svg::Polyline MapRenderer::MakeRoute(const std::vector<StopPtrConst>& stops,

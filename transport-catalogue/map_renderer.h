@@ -5,6 +5,8 @@
 #include "svg.h"
 #include "transport_catalogue.h"
 
+#include <map_renderer.pb.h>
+
 #include <algorithm>
 #include <cstdlib>
 #include <iostream>
@@ -99,9 +101,9 @@ public:
 
     void SetSettings(const RenderSettings& settings);
     void Draw(std::ostream& out = std::cout) const;
+
     bool Serialize(proto::MapRenderer& proto_renderer) const;
     bool Deserialize(const proto::MapRenderer &proto_renderer);
-
 
 private:
     svg::Polyline MakeRoute(const std::vector<StopPtrConst>& stops,

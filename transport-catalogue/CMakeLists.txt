@@ -58,8 +58,9 @@ target_compile_options(transport_catalogue PUBLIC
     -Wall
     -Wextra
     -Wconversion
+    -Wpedantic
     -Wshadow=local
- #   -Werror
+    -Werror
 )
 
 #target_compile_options(transport_catalogue PUBLIC ${warnings} -fsanitize=address)
